@@ -9,8 +9,22 @@ from .completion import Completion
 from .task_result import TaskResult
 from .user import User, UserStatusEnum
 
+# AI Safety Evaluation Dashboard models
+from .evaluation_result import EvaluationResult
+from .ai_incident import AIIncident
+from .test_taxonomy import TestTaxonomy
+from .aiuc_certification import AIUCCertification
+from .enums import (
+    SeverityLevel,
+    TestType,
+    CertificationStatus,
+    BaseRateFrequency,
+    BaseRateSeverity,
+    DifficultyLevel
+)
+
 __all__ = [
-    # Models
+    # Original Models
     "User",
     "ChatSession",
     "ChatMessage",
@@ -18,7 +32,21 @@ __all__ = [
     "ApiKey",
     "TaskResult",
 
-    # Enums
+    # AI Safety Evaluation Dashboard Models
+    "EvaluationResult",
+    "AIIncident",
+    "TestTaxonomy",
+    "AIUCCertification",
+
+    # Original Enums
     "UserStatusEnum",
     "MessageRoleEnum",
+
+    # AI Safety Evaluation Dashboard Enums
+    "SeverityLevel",
+    "TestType",
+    "CertificationStatus",
+    "BaseRateFrequency",
+    "BaseRateSeverity",
+    "DifficultyLevel",
 ]

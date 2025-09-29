@@ -2,7 +2,7 @@
 
 ## Phase 1: Foundation - Database & Core Models
 
-- [-] 1. Set up database schema for confidence infrastructure
+- [x] 1. Set up database schema for confidence infrastructure
   - Create database migration for evaluation results with test rounds (1, 2, 3), test types (single_turn, multi_turn), and is_third_party_verified flag
   - Create AI incidents table with incident → harm → tactic → use case → context flow, base rate frequency/severity, and business impact fields
   - Create test taxonomy table with AIUC-1 control mapping and incident linkage
