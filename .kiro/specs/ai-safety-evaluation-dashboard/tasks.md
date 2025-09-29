@@ -15,7 +15,7 @@
 
 ## Phase 2: Core Services - Business Logic
 
-- [ ] 2. Implement incident flow mapping service
+- [x] 2. Implement incident flow mapping service
   - Create IncidentMappingService to map incidents through: incident → harm → tactic → use case → context → test
   - Implement methods to retrieve all incidents for a given use case/industry
   - Add base rate frequency and severity calculation logic
