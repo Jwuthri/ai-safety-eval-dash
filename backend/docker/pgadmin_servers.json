@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "ai-safety-eval-dash Development",
+      "Group": "Development",
+      "Host": "postgres-dev",
+      "Port": 5432,
+      "MaintenanceDB": "ai-safety-eval-dash_dev",
+      "Username": "postgres",
+      "PassFile": "/pgpass",
+      "SSLMode": "prefer"
+    }
+  }
+}
