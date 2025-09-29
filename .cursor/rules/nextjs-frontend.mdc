@@ -1,0 +1,228 @@
+---
+globs: *.tsx,*.ts,*.jsx,*.js
+---
+
+# Next.js Frontend Development Rules
+
+Follow these conventions for the **AI Safety Evaluation Dashboard** frontend:
+
+## Next.js App Router
+- Use Next.js 14+ App Router structure in `frontend/src/app/`
+- File-based routing with `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`
+- Server and Client Components appropriately
+- Use `"use client"` directive only when necessary
+- **Dashboard Pages**: Evaluation results, incident tracking, taxonomy views
+
+## TypeScript Standards
+- **Strict TypeScript**: Enable strict mode in `frontend/tsconfig.json`
+- **Type Definitions**: Define interfaces in `frontend/src/types/`
+- **API Types**: Mirror backend models (EvaluationResult, AIIncident, etc.)
+- **Component Props**: Always type component props with interfaces
+- **Severity Types**: Use P0-P4 + PASS severity level types
+
+Example type definitions:
+```typescript
+// frontend/src/types/evaluation.ts
+export type SeverityLevel = 'P0' | 'P1' | 'P2' | 'P3' | 'P4' | 'PASS'
+
+export interface EvaluationResult {
+  id: string
+  vendor_name: string
+  model_name: string
+  test_round: number
+  total_tests: number
+  passed_tests: number
+  pass_rate: number
+  p0_incidents: number
+  p1_incidents: number
+  p2_incidents: number
+  p3_incidents: number
+  p4_incidents: number
+  evaluation_date: string
+}
+
+export interface AIIncident {
+  id: string
+  incident_name: string
+  severity: SeverityLevel
+  description: string
+  harm_type: string
+  estimated_cost: number
+}
+```
+
+## Component Structure
+- **Organization**: Group components by feature in `frontend/src/components/`
+  - `components/evaluations/` - Evaluation result displays
+  - `components/incidents/` - Incident cards and lists
+  - `components/charts/` - Data visualization components
+  - `components/taxonomy/` - Test taxonomy trees
+  - `components/ui/` - Base UI components
+- **Naming**: Use PascalCase for components, kebab-case for files
+- **Props Interface**: Always define props interface above component
+- **Export**: Use default exports for components
+
+Example component structure:
+```typescript
+interface ChatInterfaceProps {
+  initialMessages?: ChatMessage[]
+  onMessageSent?: (message: string) => void
+}
+
+export default function ChatInterface({
+  initialMessages = [],
+  onMessageSent
+}: ChatInterfaceProps) {
+  // Component implementation
+}
+```
+
+## State Management
+- **Local State**: Use `useState` for component-local state
+- **Global State**: Use Context API with providers in [src/components/providers/](mdc:{{cookiecutter.project_slug}}/frontend/src/components/providers/)
+- **Server State**: Use custom hooks for API data fetching
+- **Form State**: Use controlled components with validation
+
+## Custom Hooks
+- **Location**: Place custom hooks in `frontend/src/hooks/`
+- **Naming**: Prefix with `use` (e.g., `useEvaluations`, `useIncidents`)
+- **Reusability**: Extract reusable logic into custom hooks
+- **TypeScript**: Always type hook parameters and return values
+
+Example custom hooks for this project:
+```typescript
+// frontend/src/hooks/use-evaluations.ts
+export function useEvaluations(vendorId?: string) {
+  const [evaluations, setEvaluations] = useState<EvaluationResult[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  const fetchEvaluations = async () => {
+    // Fetch from backend API
+  }
+
+  return { evaluations, isLoading, fetchEvaluations }
+}
+
+// frontend/src/hooks/use-severity-chart.ts
+export function useSeverityChart(results: EvaluationResult[]) {
+  // Transform evaluation data for chart visualization
+  const chartData = useMemo(() => transformToChartData(results), [results])
+  return chartData
+}
+```
+
+## Styling Preferences
+- **NO Tailwind CSS**: User prefers not to use Tailwind
+- **CSS Modules**: Use CSS modules for component-specific styles
+- **Global Styles**: Use `frontend/src/app/globals.css` for global styles
+- **Component Libraries**: Can use UI component libraries if needed
+
+Example styling patterns:
+```typescript
+import { clsx } from 'clsx'
+
+interface ButtonProps {
+  variant?: 'primary' | 'secondary'
+  size?: 'sm' | 'md' | 'lg'
+  className?: string
+}
+
+export function Button({ variant = 'primary', size = 'md', className, ...props }: ButtonProps) {
+  return (
+    <button
+      className={clsx(
+        'inline-flex items-center justify-center rounded-md font-medium',
+        {
+          'bg-blue-600 text-white hover:bg-blue-700': variant === 'primary',
+          'bg-gray-200 text-gray-900 hover:bg-gray-300': variant === 'secondary',
+          'px-3 py-2 text-sm': size === 'sm',
+          'px-4 py-2 text-base': size === 'md',
+          'px-6 py-3 text-lg': size === 'lg',
+        },
+        className
+      )}
+      {...props}
+    />
+  )
+}
+```
+
+## API Integration
+- **Client**: Use API client in `frontend/src/lib/api.ts`
+- **Authentication**: Handle Clerk tokens if needed
+- **Error Handling**: Implement consistent error handling patterns
+- **Type Safety**: Type API requests and responses
+
+Example API client for evaluation dashboard:
+```typescript
+// frontend/src/lib/api.ts
+export async function fetchEvaluationResults(filters?: {
+  vendor?: string
+  industry?: string
+  testRound?: number
+}): Promise<EvaluationResult[]> {
+  const params = new URLSearchParams(filters as any)
+  const response = await fetch(`/api/v1/evaluations?${params}`)
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+
+  return response.json()
+}
+
+export async function fetchIncidents(severity?: SeverityLevel): Promise<AIIncident[]> {
+  const url = severity 
+    ? `/api/v1/incidents?severity=${severity}`
+    : '/api/v1/incidents'
+  
+  const response = await fetch(url)
+  return response.json()
+}
+```
+
+## Authentication with Clerk
+- **Provider**: Wrap app with `ClerkProvider` in [src/app/layout.tsx](mdc:{{cookiecutter.project_slug}}/frontend/src/app/layout.tsx)
+- **Components**: Use Clerk components for auth UI
+- **Hooks**: Use `useUser()`, `useAuth()` for authentication state
+- **Middleware**: Configure [middleware.ts](mdc:{{cookiecutter.project_slug}}/frontend/middleware.ts) for route protection
+
+## Performance Optimization
+- **Code Splitting**: Use dynamic imports for large components
+- **Image Optimization**: Use Next.js `Image` component
+- **Bundle Analysis**: Regular bundle size monitoring
+- **Memoization**: Use `useMemo` and `useCallback` judiciously
+
+## UI/UX Patterns for Dashboard
+- **Loading States**: Show loading indicators for data fetching
+- **Error Boundaries**: Implement error boundaries for graceful failures
+- **Responsive Design**: Desktop-first for data-heavy dashboards
+- **Data Visualization**: Use charts for severity breakdowns, pass rates over time
+- **Filtering**: Allow users to filter by vendor, industry, test round
+- **Severity Color Coding**: P0 (red) → P4 (yellow) → PASS (green)
+- **Accessibility**: Follow ARIA guidelines and semantic HTML
+
+## Data Visualization
+- **Charts Library**: Use recharts, chart.js, or similar for data viz
+- **Severity Breakdown**: Pie/bar charts showing P0-P4 distribution
+- **Trend Lines**: Show improvement across test rounds (77.9% → 94.1% → 97.4%)
+- **Comparison Views**: Compare vendors or models side-by-side
+- **Interactive**: Drill-down from summary to detailed failure examples
+
+## SEO & Meta Tags
+- **Metadata**: Use Next.js 14 metadata API
+- **Dynamic SEO**: Generate meta tags based on content
+- **Open Graph**: Configure social media sharing
+- **Structured Data**: Add JSON-LD where appropriate
+
+## Error Handling
+- **Error Boundaries**: Catch and display React errors gracefully
+- **API Errors**: Handle HTTP errors with user-friendly messages
+- **Form Validation**: Client-side validation with clear error messages
+- **Toast Notifications**: Use toast provider for user feedback
+
+## Testing
+- **Unit Tests**: Test components and hooks in isolation
+- **Integration Tests**: Test component interactions
+- **E2E Tests**: Critical user flows with Playwright/Cypress
+- **Accessibility**: Include accessibility testing

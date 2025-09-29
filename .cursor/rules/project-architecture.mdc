@@ -1,0 +1,98 @@
+---
+alwaysApply: true
+---
+
+# Project Architecture & Structure
+
+This is an **AI Safety Evaluation Dashboard** - a FastAPI + Next.js application for evaluating and visualizing AI agent safety. The system maps real-world AI incidents to preventive measures, comprehensive testing, and confidence-building visualizations for AI buyers.
+
+## Project Purpose
+Enable enterprise buyers (like Heads of Customer Support) to assess AI agent safety through:
+- **Incident Tracking**: Database of real-world AI failures (AirCanada, etc.)
+- **Prevention Standards**: AIUC-1 compliance and safeguard mapping
+- **Comprehensive Testing**: Multi-round evaluations with P0-P4 severity tracking
+- **Confidence Visualization**: Dashboards showing iterative improvement (77.9% → 94.1% → 97.4%)
+
+## Project Structure
+Monorepo structure with clear separation:
+
+- `backend/` - FastAPI backend with evaluation pipeline and database
+- `frontend/` - Next.js dashboard for visualization
+- `docker-compose.yml` - Service orchestration
+
+## Backend Architecture (FastAPI)
+
+### Core Structure
+- `app/main.py` - Application entrypoint with lifespan management
+- `app/api/v1/` - API endpoints grouped by version
+- `app/core/` - Core framework components (config, CQRS, security, monitoring)
+- `app/services/` - Business logic services (evaluation, chat, completions)
+- `app/models/` - Pydantic models for API contracts
+- `app/database/models/` - SQLAlchemy models (evaluation_result, ai_incident, aiuc_certification, test_taxonomy)
+- `app/database/repositories/` - Data access layer
+- `app/utils/` - Shared utilities
+- `app/agents/` - LLM agent implementations for evaluation pipelines
+
+### Key Patterns
+1. **CQRS Architecture**: Commands and Queries separated with dedicated buses in `app/core/cqrs/`
+2. **Dependency Injection**: Services injected via FastAPI's dependency system
+3. **Repository Pattern**: Database access abstracted through repositories
+4. **Service Layer**: Business logic encapsulated in services
+5. **Environment Configuration**: Settings managed via Pydantic settings in `app/core/config/`
+
+## Frontend Architecture (Next.js)
+
+### Core Structure
+- `src/app/` - Next.js App Router for dashboard pages
+- `src/components/` - React components (evaluation viz, incident cards, taxonomy trees)
+- `src/hooks/` - Custom React hooks for data fetching
+- `src/lib/` - API client for backend communication
+- `src/types/` - TypeScript types matching backend models
+
+### Key Patterns
+1. **App Router**: Next.js 14 App Router for navigation
+2. **Component Organization**: Feature-based (evaluations, incidents, dashboards)
+3. **Provider Pattern**: Context providers for auth and global state
+4. **Data Visualization**: Charts and graphs for evaluation results
+
+## Domain Models
+
+### Key Database Entities
+- **EvaluationResult**: Test rounds, P0-P4 severity tracking, pass rates
+- **AIIncident**: Real-world failures (AirCanada, etc.), severity, frequency
+- **AiucCertification**: AIUC-1 compliance standards and safeguards
+- **TestTaxonomy**: Hierarchical test organization by use case/industry
+
+### Evaluation Pipeline
+- **Multi-turn Testing**: Conversational red-teaming scenarios
+- **Severity Levels**: P0 (critical) → P4 (trivial/greyzone) + PASS
+- **Iterative Improvement**: Track improvement across test rounds
+- **Third-party Verification**: Independent evaluation validation
+
+## Cross-Cutting Concerns
+
+### Authentication
+- Clerk.dev integration for frontend and backend (if needed)
+- JWT token validation in FastAPI middleware
+
+### Monitoring & Observability
+- OpenTelemetry distributed tracing
+- Prometheus metrics collection
+- Structured logging with correlation IDs
+
+### Error Handling
+- Custom exception hierarchy
+- Global error handlers in FastAPI
+- Consistent error response formats
+
+### Testing Strategy
+- Unit tests in `backend/tests/unit/`
+- Integration tests in `backend/tests/integration/`
+- Performance tests in `backend/tests/performance/`
+- Comprehensive test coverage with pytest
+
+## LLM Integration
+- **Agno AI Agent Framework**: For multi-turn evaluation conversations
+- **Multi-Provider Support**: OpenRouter (GPT-4.1, Anthropic Sonnet 4, Claude Opus 4)
+- **Vector Database**: Pinecone for evaluation context and memory
+- **Evaluation Agents**: Specialized agents for red-teaming and safety testing
