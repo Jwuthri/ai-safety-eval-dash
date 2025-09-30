@@ -14,7 +14,9 @@ from .evaluation_round import EvaluationRoundRepository
 from .human_review import HumanReviewRepository
 from .model_converter import ModelConverter
 from .organization import OrganizationRepository
+from .precomputed_answer import PreComputedAnswerRepository
 from .scenario import ScenarioRepository
+from .scenario_conversation import ScenarioConversationRepository
 from .task_result import TaskResultRepository
 from .user import UserRepository
 
@@ -26,7 +28,7 @@ __all__ = [
     "CompletionRepository",
     "ApiKeyRepository",
     "TaskResultRepository",
-    
+
     # AI Safety Evaluation Repositories
     "BusinessTypeRepository",
     "OrganizationRepository",
@@ -36,6 +38,8 @@ __all__ = [
     "HumanReviewRepository",
     "AgentIterationRepository",
     "AiucCertificationRepository",
+    "ScenarioConversationRepository",
+    "PreComputedAnswerRepository",
 
     # Utilities
     "ModelConverter",

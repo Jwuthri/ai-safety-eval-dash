@@ -18,6 +18,8 @@ from .evaluation_result import EvaluationResult
 from .human_review import HumanReview, ReviewStatus
 from .agent_iteration import AgentIteration
 from .aiuc_certification import AiucCertification, CertificationStatus
+from .scenario_conversation import ScenarioConversation
+from .precomputed_answer import PreComputedAnswer
 
 __all__ = [
     # Original Models
@@ -37,6 +39,8 @@ __all__ = [
     "HumanReview",
     "AgentIteration",
     "AiucCertification",
+    "ScenarioConversation",
+    "PreComputedAnswer",
 
     # Original Enums
     "UserStatusEnum",
