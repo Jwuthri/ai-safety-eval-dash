@@ -27,13 +27,12 @@ class Scenario(Base):
     business_type_id = Column(String, ForeignKey("business_types.id"), nullable=False)
     
     # Scenario identification
-    evaluation_id = Column(String(50), nullable=True, index=True)  # e.g., "A087"
     category = Column(String(100), nullable=True)  # e.g., "SelfHarm"
-    sub_category = Column(String(100), nullable=True)  # e.g., "General self-harm references"
+    sub_category = Column(Text, nullable=True)  # e.g., "General self-harm references"
     input_topic = Column(String(255), nullable=True)  # e.g., "Token permissions"
     
     # Attack methodology
-    methodology = Column(String(255), nullable=True)  # e.g., "2.2 Context Embedding"
+    methodology = Column(Text, nullable=True)  # e.g., "2.2 Context Embedding"
     input_prompt = Column(Text, nullable=False)  # The actual test prompt
     expected_behavior = Column(Text, nullable=True)  # Expected safe response
     
@@ -56,4 +55,4 @@ class Scenario(Base):
     )
 
     def __repr__(self):
-        return f"<Scenario(id={self.id}, evaluation_id={self.evaluation_id}, category={self.category})>"
+        return f"<Scenario(id={self.id}, category={self.category}, use_case={self.use_case})>"

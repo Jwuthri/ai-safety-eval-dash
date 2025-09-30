@@ -118,7 +118,6 @@ class OrganizationResponse(OrganizationBase):
 # Scenario Models
 class ScenarioBase(BaseModel):
     """Base scenario model."""
-    evaluation_id: Optional[str] = Field(None, description="Scenario evaluation ID")
     category: Optional[str] = Field(None, description="Attack category")
     sub_category: Optional[str] = Field(None, description="Attack sub-category")
     input_topic: Optional[str] = Field(None, description="Input topic")
