@@ -13,9 +13,9 @@ from sqlalchemy.orm import Session, sessionmaker
 # Get settings
 settings = get_settings()
 
-# Configure logging
+# Configure logging - suppress SQLAlchemy verbosity (show errors only)
 logging.basicConfig()
-logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
+logging.getLogger("sqlalchemy.engine").setLevel(logging.ERROR)
 
 # Create Base class for declarative models (shared between sync and async)
 Base = declarative_base()
@@ -27,7 +27,7 @@ engine = create_engine(
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
-    echo=settings.environment == "development"
+    echo=False  # Disable SQLAlchemy echo (too verbose)
 )
 
 

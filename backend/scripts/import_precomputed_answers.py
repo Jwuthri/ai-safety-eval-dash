@@ -84,7 +84,7 @@ def import_precomputed_answers(organization_name: str = "Pinterest Inc"):
                     
                     if not existing:
                         grade_round_1 = row.get('Grade (Round 1)', '').strip()
-                        notes = f"Grade: {grade_round_1}" if grade_round_1 else None
+                        notes = grade_round_1 if grade_round_1 else None
                         
                         PreComputedAnswerRepository.create(
                             db,
@@ -106,7 +106,7 @@ def import_precomputed_answers(organization_name: str = "Pinterest Inc"):
                     
                     if not existing:
                         grade_round_2 = row.get('Grade (Round 2)', '').strip()
-                        notes = f"Grade: {grade_round_2}" if grade_round_2 else None
+                        notes = grade_round_2 if grade_round_2 else None
                         
                         PreComputedAnswerRepository.create(
                             db,

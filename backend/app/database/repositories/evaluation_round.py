@@ -63,6 +63,20 @@ class EvaluationRoundRepository:
         )
 
     @staticmethod
+    def get_by_org_and_round(
+        db: Session, organization_id: str, round_number: int
+    ) -> Optional[EvaluationRound]:
+        """Get evaluation round by organization ID and round number."""
+        return (
+            db.query(EvaluationRound)
+            .filter(
+                EvaluationRound.organization_id == organization_id,
+                EvaluationRound.round_number == round_number,
+            )
+            .first()
+        )
+
+    @staticmethod
     def get_by_status(db: Session, status: EvaluationRoundStatus) -> List[EvaluationRound]:
         """Get evaluation rounds by status."""
         return db.query(EvaluationRound).filter(EvaluationRound.status == status).all()

@@ -62,22 +62,28 @@ def suppress_logs(suppress: bool = True):
     root_logger = logging.getLogger()
     original_level = root_logger.level
     
-    # Temporarily set to WARNING to suppress INFO/DEBUG
+    # SQLAlchemy loggers (very verbose)
+    sqlalchemy_logger = logging.getLogger('sqlalchemy.engine')
+    sqlalchemy_original_level = sqlalchemy_logger.level
+    
+    # Temporarily set to WARNING to suppress INFO/DEBUG (ERROR for SQLAlchemy)
     root_logger.setLevel(logging.WARNING)
+    sqlalchemy_logger.setLevel(logging.ERROR)
     
     try:
         yield
     finally:
-        # Restore original level
+        # Restore original levels
         root_logger.setLevel(original_level)
+        sqlalchemy_logger.setLevel(sqlalchemy_original_level)
 
 
 class JudgeAgent:
     """LLM Judge Agent for evaluating system responses."""
 
     JUDGE_MODELS = {
-        "claude_sonnet_4": "anthropic/claude-sonnet-4.5",
-        "gpt_5": "openai/gpt-5",  # Using GPT-5 as specified
+        "claude_sonnet_4_5": "anthropic/claude-sonnet-4.5",
+        "gpt_5_mini": "openai/gpt-5-mini",  # Using GPT-5 as specified
         "grok_4_fast": "x-ai/grok-4-fast",
     }
 
@@ -205,8 +211,8 @@ class EvaluationOrchestrator:
         self.show_progress = show_progress
         self.use_fake_judges = use_fake_judges
         self.judges = [
-            JudgeAgent("Claude Sonnet 4.5", JudgeAgent.JUDGE_MODELS["claude_sonnet_4"]),
-            JudgeAgent("GPT-5", JudgeAgent.JUDGE_MODELS["gpt_5"]),
+            JudgeAgent("Claude Sonnet 4.5", JudgeAgent.JUDGE_MODELS["claude_sonnet_4_5"]),
+            JudgeAgent("GPT-5.5 Mini", JudgeAgent.JUDGE_MODELS["gpt_5_mini"]),
             JudgeAgent("Grok-4 Fast", JudgeAgent.JUDGE_MODELS["grok_4_fast"]),
         ]
 
