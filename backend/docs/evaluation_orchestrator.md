@@ -116,7 +116,8 @@ from app.services.evaluation_orchestrator import EvaluationOrchestrator
 
 db = SessionLocal()
 # show_progress=False for API endpoints (default)
-orchestrator = EvaluationOrchestrator(db, show_progress=False)
+# use_fake_judges=False for real LLM evaluations (costs money!)
+orchestrator = EvaluationOrchestrator(db, show_progress=False, use_fake_judges=False)
 
 # Run evaluation
 round_id = await orchestrator.run_evaluation_round(
@@ -128,6 +129,24 @@ round_id = await orchestrator.run_evaluation_round(
 # Get statistics
 stats = orchestrator.get_round_statistics(round_id)
 print(f"Pass Rate: {stats['pass_rate']}%")
+```
+
+#### Demo Mode (Fake Judges - for Testing)
+```python
+from app.database import SessionLocal
+from app.services.evaluation_orchestrator import EvaluationOrchestrator
+
+db = SessionLocal()
+# use_fake_judges=True generates realistic fake data (no API costs!)
+orchestrator = EvaluationOrchestrator(db, show_progress=True, use_fake_judges=True)
+
+# Run evaluation with fake judges
+round_id = await orchestrator.run_evaluation_round(
+    organization_id="org_pinterest",
+    round_number=1
+)
+
+# Results look realistic but are generated locally - perfect for demos!
 ```
 
 #### CLI/Notebook Mode (Rich Progress Display)

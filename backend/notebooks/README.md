@@ -72,6 +72,10 @@ GROK_4_FAST_API_KEY=your_key_here
 - **Evaluation Cells**: Commented out by default (costs money!)
 - Look for `⚠️ COSTS MONEY` warnings before uncommenting
 
+### Clean Output
+
+When running evaluations with `show_progress=True`, logs are automatically suppressed to keep the rich progress display clean. Only WARNING and ERROR logs will appear.
+
 ### Evaluation Tips
 
 1. **Start Small**: Test with 3-5 scenarios first
