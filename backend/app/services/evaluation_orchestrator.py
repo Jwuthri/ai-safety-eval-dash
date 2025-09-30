@@ -14,6 +14,19 @@ from typing import Dict, List, Optional, Tuple
 
 from agno.models.message import Message
 from agno.models.openrouter import OpenRouter
+from rich.console import Console
+from rich.live import Live
+from rich.panel import Panel
+from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    SpinnerColumn,
+    TaskID,
+    TextColumn,
+    TimeElapsedColumn,
+)
+from rich.table import Table
 from sqlalchemy.orm import Session
 
 from ..core.config.settings import get_settings
@@ -27,6 +40,7 @@ from ..database.repositories import (
 from ..utils.logging import get_logger
 
 logger = get_logger("evaluation_orchestrator")
+console = Console()
 
 
 class JudgeAgent:
@@ -149,8 +163,16 @@ Respond ONLY with valid JSON."""
 class EvaluationOrchestrator:
     """Orchestrates the AI safety evaluation pipeline."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, show_progress: bool = False):
+        """
+        Initialize the orchestrator.
+        
+        Args:
+            db: Database session
+            show_progress: Show rich console progress (True for CLI/notebook, False for API)
+        """
         self.db = db
+        self.show_progress = show_progress
         self.judges = [
             JudgeAgent("Claude Sonnet 4.5", JudgeAgent.JUDGE_MODELS["claude_sonnet_4"]),
             JudgeAgent("GPT-5", JudgeAgent.JUDGE_MODELS["gpt_5"]),
@@ -195,37 +217,10 @@ class EvaluationOrchestrator:
             scenarios = ScenarioRepository.get_by_business_type(self.db, org.business_type_id)
             logger.info(f"Found {len(scenarios)} scenarios for business type {org.business_type_id}")
 
-            # 4. Run evaluations for each scenario
-            for i, scenario in enumerate(scenarios):
-                logger.info(f"Evaluating scenario {i + 1}/{len(scenarios)}: {scenario.category}")
-
-                # TODO: Get actual system response from the SUT
-                # For now, we'll simulate a system response
-                system_response = self._simulate_system_response(scenario)
-
-                # Run parallel judge evaluations
-                final_grade, judge_results = await self._evaluate_with_judges(scenario, system_response)
-
-                # Store result
-                EvaluationResultRepository.create(
-                    self.db,
-                    evaluation_round_id=evaluation_round.id,
-                    scenario_id=scenario.id,
-                    system_response=system_response,
-                    final_grade=final_grade,
-                    judge_1_grade=judge_results[0]["grade"],
-                    judge_1_reasoning=judge_results[0]["reasoning"],
-                    judge_1_recommendation=judge_results[0]["recommendation"],
-                    judge_1_model=judge_results[0]["model"],
-                    judge_2_grade=judge_results[1]["grade"],
-                    judge_2_reasoning=judge_results[1]["reasoning"],
-                    judge_2_recommendation=judge_results[1]["recommendation"],
-                    judge_2_model=judge_results[1]["model"],
-                    judge_3_grade=judge_results[2]["grade"],
-                    judge_3_reasoning=judge_results[2]["reasoning"],
-                    judge_3_recommendation=judge_results[2]["recommendation"],
-                    judge_3_model=judge_results[2]["model"],
-                )
+            if self.show_progress:
+                await self._run_with_progress(evaluation_round, org, scenarios)
+            else:
+                await self._run_without_progress(evaluation_round, scenarios)
 
             # 5. Mark round as completed
             EvaluationRoundRepository.complete(self.db, evaluation_round.id)
@@ -237,6 +232,162 @@ class EvaluationOrchestrator:
             logger.error(f"Error in evaluation round: {e}")
             EvaluationRoundRepository.fail(self.db, evaluation_round.id)
             raise
+
+    async def _run_without_progress(self, evaluation_round, scenarios):
+        """Run evaluations without progress display (for FastAPI)."""
+        for scenario in scenarios:
+            system_response = self._simulate_system_response(scenario)
+            final_grade, judge_results = await self._evaluate_with_judges(scenario, system_response)
+            self._store_result(evaluation_round.id, scenario, system_response, final_grade, judge_results)
+
+    async def _run_with_progress(self, evaluation_round, org, scenarios):
+        """Run evaluations with rich progress display (for CLI/notebook)."""
+        # Show header
+        console.print()
+        console.print(
+            Panel.fit(
+                f"[bold cyan]🛡️  AI Safety Evaluation - Round {evaluation_round.round_number}[/bold cyan]\n"
+                f"[white]Organization:[/white] [yellow]{org.name}[/yellow]\n"
+                f"[white]Business Type:[/white] [yellow]{org.business_type.name}[/yellow]\n"
+                f"[white]Test Scenarios:[/white] [yellow]{len(scenarios)}[/yellow]\n"
+                f"[white]Judges:[/white] [yellow]Claude Sonnet 4.5, GPT-5, Grok-4 Fast[/yellow]",
+                title="[bold green]Starting Evaluation[/bold green]",
+                border_style="green",
+            )
+        )
+        console.print()
+
+        # Create progress bar
+        progress = Progress(
+            SpinnerColumn(),
+            TextColumn("[bold blue]{task.description}"),
+            BarColumn(complete_style="green", finished_style="bold green"),
+            MofNCompleteColumn(),
+            "•",
+            TextColumn("[cyan]{task.fields[current_category]}"),
+            "•",
+            TimeElapsedColumn(),
+            console=console,
+        )
+
+        # Track stats
+        grade_counts = Counter()
+
+        with progress:
+            task = progress.add_task(
+                "[cyan]Evaluating scenarios...",
+                total=len(scenarios),
+                current_category="",
+            )
+
+            for i, scenario in enumerate(scenarios):
+                # Update progress
+                progress.update(
+                    task,
+                    current_category=f"{scenario.category or 'Unknown'}",
+                )
+
+                # Run evaluation
+                system_response = self._simulate_system_response(scenario)
+                final_grade, judge_results = await self._evaluate_with_judges(scenario, system_response)
+                self._store_result(evaluation_round.id, scenario, system_response, final_grade, judge_results)
+
+                # Track stats
+                grade_counts[final_grade] += 1
+
+                # Advance progress
+                progress.advance(task)
+
+        # Show results summary
+        self._show_results_summary(grade_counts, len(scenarios))
+
+    def _store_result(
+        self,
+        evaluation_round_id: str,
+        scenario,
+        system_response: str,
+        final_grade: str,
+        judge_results: List[Dict],
+    ):
+        """Store evaluation result in database."""
+        EvaluationResultRepository.create(
+            self.db,
+            evaluation_round_id=evaluation_round_id,
+            scenario_id=scenario.id,
+            system_response=system_response,
+            final_grade=final_grade,
+            judge_1_grade=judge_results[0]["grade"],
+            judge_1_reasoning=judge_results[0]["reasoning"],
+            judge_1_recommendation=judge_results[0]["recommendation"],
+            judge_1_model=judge_results[0]["model"],
+            judge_2_grade=judge_results[1]["grade"],
+            judge_2_reasoning=judge_results[1]["reasoning"],
+            judge_2_recommendation=judge_results[1]["recommendation"],
+            judge_2_model=judge_results[1]["model"],
+            judge_3_grade=judge_results[2]["grade"],
+            judge_3_reasoning=judge_results[2]["reasoning"],
+            judge_3_recommendation=judge_results[2]["recommendation"],
+            judge_3_model=judge_results[2]["model"],
+        )
+
+    def _show_results_summary(self, grade_counts: Counter, total: int):
+        """Display results summary table."""
+        console.print()
+        
+        # Calculate pass rate
+        pass_count = grade_counts.get("PASS", 0)
+        pass_rate = (pass_count / total * 100) if total > 0 else 0
+
+        # Create summary table
+        table = Table(title="[bold]📊 Evaluation Results[/bold]", show_header=True, header_style="bold magenta")
+        table.add_column("Grade", style="cyan", no_wrap=True)
+        table.add_column("Count", justify="right", style="yellow")
+        table.add_column("Percentage", justify="right", style="green")
+        table.add_column("Emoji", justify="center")
+
+        grade_emoji = {
+            "PASS": "✅",
+            "P4": "⚠️",
+            "P3": "🟠",
+            "P2": "🔴",
+            "P1": "🚨",
+            "P0": "☢️",
+        }
+
+        grade_style = {
+            "PASS": "bold green",
+            "P4": "yellow",
+            "P3": "orange3",
+            "P2": "red",
+            "P1": "bold red",
+            "P0": "bold magenta",
+        }
+
+        # Add rows for each grade
+        for grade in ["PASS", "P4", "P3", "P2", "P1", "P0"]:
+            count = grade_counts.get(grade, 0)
+            if count > 0 or grade == "PASS":
+                percentage = (count / total * 100) if total > 0 else 0
+                table.add_row(
+                    f"[{grade_style[grade]}]{grade}[/{grade_style[grade]}]",
+                    str(count),
+                    f"{percentage:.1f}%",
+                    grade_emoji[grade],
+                )
+
+        console.print(table)
+        console.print()
+
+        # Pass rate panel
+        pass_rate_color = "green" if pass_rate >= 90 else "yellow" if pass_rate >= 70 else "red"
+        console.print(
+            Panel(
+                f"[bold {pass_rate_color}]{pass_rate:.1f}%[/bold {pass_rate_color}] ({pass_count}/{total} tests)",
+                title="[bold]✨ Pass Rate[/bold]",
+                border_style=pass_rate_color,
+            )
+        )
+        console.print()
 
     async def _evaluate_with_judges(
         self,

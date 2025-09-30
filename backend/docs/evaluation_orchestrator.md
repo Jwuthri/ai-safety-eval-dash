@@ -108,12 +108,15 @@ python examples/evaluation_example.py
 Runs complete evaluation for an organization.
 
 ### Programmatic Usage
+
+#### API Mode (Silent - for FastAPI)
 ```python
 from app.database import SessionLocal
 from app.services.evaluation_orchestrator import EvaluationOrchestrator
 
 db = SessionLocal()
-orchestrator = EvaluationOrchestrator(db)
+# show_progress=False for API endpoints (default)
+orchestrator = EvaluationOrchestrator(db, show_progress=False)
 
 # Run evaluation
 round_id = await orchestrator.run_evaluation_round(
@@ -125,6 +128,24 @@ round_id = await orchestrator.run_evaluation_round(
 # Get statistics
 stats = orchestrator.get_round_statistics(round_id)
 print(f"Pass Rate: {stats['pass_rate']}%")
+```
+
+#### CLI/Notebook Mode (Rich Progress Display)
+```python
+from app.database import SessionLocal
+from app.services.evaluation_orchestrator import EvaluationOrchestrator
+
+db = SessionLocal()
+# show_progress=True for CLI/notebooks (shows rich console output)
+orchestrator = EvaluationOrchestrator(db, show_progress=True)
+
+# Run evaluation with progress bars and visual feedback
+round_id = await orchestrator.run_evaluation_round(
+    organization_id="org_pinterest",
+    round_number=1
+)
+
+# Results are displayed automatically with rich formatting
 ```
 
 ## Database Storage
