@@ -1,104 +1,63 @@
 """
-AIUC Certification model for AI Safety Evaluation Dashboard.
+AIUC certification database model for AI Safety Evaluation Dashboard.
 """
 
+import enum
 import uuid
-from datetime import datetime, date
+from datetime import datetime
 from decimal import Decimal
-from typing import List, Dict, Any, Optional
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Date, String, Numeric
-from sqlalchemy import Enum as SQLEnum
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, DateTime, Enum as SQLEnum, ForeignKey, Index, Integer, Numeric, String
+from sqlalchemy.orm import relationship
 
 from ..base import Base
-from .enums import CertificationStatus
 
 
-class AIUCCertification(Base):
+class CertificationStatus(str, enum.Enum):
+    """AIUC certification status."""
+    PENDING = "pending"
+    CERTIFIED = "certified"
+    REVOKED = "revoked"
+
+
+class AiucCertification(Base):
     """
-    AIUC-1 certification and insurance status tracking.
+    AIUC-1 certification model for tracking AI safety certification.
     
-    Manages certification status, insurance eligibility, and coverage amounts
-    to support the confidence infrastructure's insurance value proposition.
+    Issued to an organization when they achieve:
+    - P0 count = 0
+    - P1 count = 0
+    - P2 count = 0
+    - P3 count = 0
+    - P4 count = 0
     """
     __tablename__ = "aiuc_certifications"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    vendor_name = Column(String(255), nullable=False, index=True)
-    model_name = Column(String(255), nullable=False)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    organization_id = Column(String, ForeignKey("organizations.id"), nullable=False)
+    evaluation_round_id = Column(String, ForeignKey("evaluation_rounds.id"), nullable=False)
     
-    # Certification status
-    certification_status = Column(SQLEnum(CertificationStatus), nullable=False, index=True)
-    certification_date = Column(Date, nullable=True)
-    expiry_date = Column(Date, nullable=True)
-    framework_version = Column(String(50), nullable=False)
+    certification_status = Column(SQLEnum(CertificationStatus), default=CertificationStatus.PENDING)
     
-    # Insurance coverage
-    insurance_eligible = Column(Boolean, nullable=False, default=False)
-    insurance_coverage_usd = Column(Numeric(15, 2), nullable=True)
-    insurance_provider = Column(String(255), nullable=True)
-    policy_start_date = Column(Date, nullable=True)
-    policy_end_date = Column(Date, nullable=True)
+    # Certificate details
+    issued_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=True)
     
-    # Evaluation linkage
-    evaluation_ids = Column(JSON, nullable=True)  # Array of evaluation IDs that support this certification
+    # Metrics snapshot
+    final_pass_rate = Column(Numeric(5, 2), nullable=True)  # e.g., 97.40
+    p2_count = Column(Integer, default=0)
+    p3_count = Column(Integer, default=0)
+    p4_count = Column(Integer, default=0)
     
-    # Compliance details
-    compliance_score = Column(Numeric(5, 2), nullable=True)  # 0-100 compliance score
-    aiuc_controls_passed = Column(JSON, nullable=True)  # Which AIUC-1 controls were verified
-    residual_risks = Column(JSON, nullable=True)  # Documented residual risks after certification
-    
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    # Relationships
+    organization = relationship("Organization", back_populates="certifications")
+    evaluation_round = relationship("EvaluationRound", back_populates="certifications")
 
-    @property
-    def is_active(self) -> bool:
-        """Check if certification is currently active."""
-        if self.certification_status != CertificationStatus.ACTIVE:
-            return False
-        
-        if self.expiry_date and self.expiry_date < date.today():
-            return False
-        
-        return True
-
-    @property
-    def insurance_status(self) -> Dict[str, Any]:
-        """Get structured insurance status information."""
-        return {
-            "eligible": self.insurance_eligible,
-            "coverage_amount_usd": float(self.insurance_coverage_usd) if self.insurance_coverage_usd else None,
-            "provider": self.insurance_provider,
-            "policy_active": self.is_policy_active,
-            "policy_start_date": self.policy_start_date.isoformat() if self.policy_start_date else None,
-            "policy_end_date": self.policy_end_date.isoformat() if self.policy_end_date else None
-        }
-
-    @property
-    def is_policy_active(self) -> bool:
-        """Check if insurance policy is currently active."""
-        if not self.insurance_eligible or not self.policy_start_date or not self.policy_end_date:
-            return False
-        
-        today = date.today()
-        return self.policy_start_date <= today <= self.policy_end_date
-
-    @property
-    def certification_summary(self) -> Dict[str, Any]:
-        """Get structured certification summary."""
-        return {
-            "vendor_name": self.vendor_name,
-            "model_name": self.model_name,
-            "status": self.certification_status.value,
-            "is_active": self.is_active,
-            "certification_date": self.certification_date.isoformat() if self.certification_date else None,
-            "expiry_date": self.expiry_date.isoformat() if self.expiry_date else None,
-            "framework_version": self.framework_version,
-            "compliance_score": float(self.compliance_score) if self.compliance_score else None,
-            "insurance_status": self.insurance_status
-        }
+    # Indexes
+    __table_args__ = (
+        Index('ix_cert_org_status', 'organization_id', 'certification_status'),
+        Index('ix_cert_issued', 'issued_at'),
+    )
 
     def __repr__(self):
-        return (f"<AIUCCertification(id={self.id}, vendor={self.vendor_name}, "
-                f"model={self.model_name}, status={self.certification_status})>")
+        return f"<AiucCertification(id={self.id}, status={self.certification_status})>"

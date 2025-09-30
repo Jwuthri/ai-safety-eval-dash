@@ -8,6 +8,7 @@ from .chat import *
 from .completion import *
 from .task import *
 from .user import *
+from .evaluation import *
 
 __all__ = [
     # Chat models
@@ -30,7 +31,6 @@ __all__ = [
     "LoginResponse",
     "UserStats",
     "UserListResponse",
-    # Note: API Key and advanced Task models available but not currently used in endpoints
     # Base models
     "HealthResponse",
     "ErrorResponse",
@@ -38,5 +38,30 @@ __all__ = [
     "SuccessResponse",
     "StatusResponse",
     "APIInfo",
-    "PaginatedResponse"
+    "PaginatedResponse",
+    # Evaluation models
+    "EvaluationRoundStatusEnum",
+    "ReviewStatusEnum",
+    "CertificationStatusEnum",
+    "SeverityGrade",
+    "OrganizationBase",
+    "OrganizationCreate",
+    "OrganizationResponse",
+    "BusinessTypeBase",
+    "BusinessTypeCreate",
+    "BusinessTypeResponse",
+    "ScenarioBase",
+    "ScenarioCreate",
+    "ScenarioResponse",
+    "EvaluationRoundCreate",
+    "EvaluationRoundResponse",
+    "JudgeResponse",
+    "EvaluationResultCreate",
+    "EvaluationResultResponse",
+    "RoundSummary",
+    "HumanReviewCreate",
+    "HumanReviewResponse",
+    "CertificationCheck",
+    "CertificationIssue",
+    "CertificationResponse",
 ]

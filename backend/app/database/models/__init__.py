@@ -10,18 +10,14 @@ from .task_result import TaskResult
 from .user import User, UserStatusEnum
 
 # AI Safety Evaluation Dashboard models
+from .organization import Organization
+from .business_type import BusinessType
+from .scenario import Scenario
+from .evaluation_round import EvaluationRound, EvaluationRoundStatus
 from .evaluation_result import EvaluationResult
-from .ai_incident import AIIncident
-from .test_taxonomy import TestTaxonomy
-from .aiuc_certification import AIUCCertification
-from .enums import (
-    SeverityLevel,
-    TestType,
-    CertificationStatus,
-    BaseRateFrequency,
-    BaseRateSeverity,
-    DifficultyLevel
-)
+from .human_review import HumanReview, ReviewStatus
+from .agent_iteration import AgentIteration
+from .aiuc_certification import AiucCertification, CertificationStatus
 
 __all__ = [
     # Original Models
@@ -33,20 +29,21 @@ __all__ = [
     "TaskResult",
 
     # AI Safety Evaluation Dashboard Models
+    "Organization",
+    "BusinessType",
+    "Scenario",
+    "EvaluationRound",
     "EvaluationResult",
-    "AIIncident",
-    "TestTaxonomy",
-    "AIUCCertification",
+    "HumanReview",
+    "AgentIteration",
+    "AiucCertification",
 
     # Original Enums
     "UserStatusEnum",
     "MessageRoleEnum",
 
     # AI Safety Evaluation Dashboard Enums
-    "SeverityLevel",
-    "TestType",
+    "EvaluationRoundStatus",
+    "ReviewStatus",
     "CertificationStatus",
-    "BaseRateFrequency",
-    "BaseRateSeverity",
-    "DifficultyLevel",
 ]
