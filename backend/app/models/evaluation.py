@@ -91,6 +91,14 @@ class OrganizationCreate(OrganizationBase):
     business_type_id: str = Field(..., description="Business type ID they belong to")
 
 
+class OrganizationUpdate(BaseModel):
+    """Organization update model."""
+    name: Optional[str] = Field(None, description="Organization name", max_length=255)
+    contact_email: Optional[str] = Field(None, description="Contact email")
+    contact_name: Optional[str] = Field(None, description="Contact person name")
+    is_active: Optional[bool] = Field(None, description="Organization status")
+
+
 class OrganizationResponse(OrganizationBase):
     """Organization response model."""
     id: str = Field(..., description="Organization ID")
@@ -316,10 +324,14 @@ class CertificationCheck(BaseModel):
         }
 
 
-class CertificationIssue(BaseModel):
+class CertificationCreate(BaseModel):
     """Certification issuance request."""
     organization_id: str = Field(..., description="Organization ID")
     evaluation_round_id: str = Field(..., description="Evaluation round ID")
+
+
+# Alias for backwards compatibility
+CertificationIssue = CertificationCreate
 
 
 class CertificationResponse(BaseModel):

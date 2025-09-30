@@ -18,6 +18,12 @@ install_rich_traceback(show_locals=True)
 # Global logger instance
 _logger: Optional[logging.Logger] = None
 
+# Silence SQLAlchemy IMMEDIATELY before anything else happens
+logging.getLogger("sqlalchemy.engine").setLevel(logging.ERROR)
+logging.getLogger("sqlalchemy.pool").setLevel(logging.ERROR)
+logging.getLogger("sqlalchemy.dialects").setLevel(logging.ERROR)
+logging.getLogger("sqlalchemy.orm").setLevel(logging.ERROR)
+
 
 def setup_logging(log_level: str = "INFO", environment: str = "development"):
     """Simple Rich logging setup."""
@@ -45,6 +51,13 @@ def setup_logging(log_level: str = "INFO", environment: str = "development"):
     # Configure uvicorn to use our Rich handler
     for logger_name in ["uvicorn", "uvicorn.access", "uvicorn.error"]:
         logger = logging.getLogger(logger_name)
+        logger.handlers.clear()
+        logger.propagate = True
+
+    # Silence SQLAlchemy's chatty logs - only show errors
+    for logger_name in ["sqlalchemy.engine", "sqlalchemy.pool", "sqlalchemy.dialects", "sqlalchemy.orm"]:
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(logging.ERROR)
         logger.handlers.clear()
         logger.propagate = True
 

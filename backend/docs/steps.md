@@ -1,52 +1,52 @@
-## 🎯 Next Steps (Prioritized)
+## 🎯 Implementation Progress
 
-### **Step 1: Database Migrations** 
-Create Alembic migration for all new tables:
-```bash
-# We need to create migration file for:
-- business_types
-- organizations  
-- scenarios
-- evaluation_rounds
-- evaluation_results
-- human_reviews
-- agent_iterations
-- aiuc_certifications
-```
+### ✅ **Step 1: Database Migrations** (DONE)
+Created 4 Alembic migrations:
+- `002_ai_safety_evaluation_schema.py` - All 8 tables
+- `003_extend_scenario_text_fields.py` - Text field extensions
+- `004_remove_scenario_evaluation_id.py` - Schema cleanup
 
-### **Step 2: Seed Initial Data**
-Create seed script for:
+### ✅ **Step 2: Seed Initial Data** (DONE)
+Created `backend/scripts/seed_evaluation_data.py`:
 - ✅ 3 business types (Airlines, API Support, E-commerce)
 - ✅ 2 organizations (AirCanada, Pinterest)
-- ✅ Import scenarios from your CSV file
+- ✅ 314 scenarios imported from CSV
+- ✅ 5 fake AirCanada scenarios
 
-### **Step 3: Build Repositories**
-Create repository classes in `backend/app/database/repositories/`:
-- `business_type_repository.py`
-- `organization_repository.py`
-- `scenario_repository.py`
-- `evaluation_round_repository.py`
-- `evaluation_result_repository.py`
-- etc.
+### ✅ **Step 3: Build Repositories** (DONE)
+Created 8 repository classes in `backend/app/database/repositories/`:
+- ✅ `business_type.py`
+- ✅ `organization.py`
+- ✅ `scenario.py`
+- ✅ `evaluation_round.py`
+- ✅ `evaluation_result.py`
+- ✅ `human_review.py`
+- ✅ `agent_iteration.py`
+- ✅ `aiuc_certification.py`
 
-### **Step 4: Evaluation Service** 
-Build `backend/app/services/evaluation_orchestrator.py`:
-- Start evaluation round
-- Fetch scenarios for business type
-- Call system under test (SUT)
-- Run 3 judge agents in parallel
-- Store results
+### ✅ **Step 4: Evaluation Orchestrator** (DONE)
+Built `backend/app/services/evaluation_orchestrator.py`:
+- ✅ Start evaluation round
+- ✅ Fetch scenarios for business type
+- ✅ Run 3 judge agents in parallel
+- ✅ Store results in database
+- ✅ Calculate statistics
 
-### **Step 5: Judge Agents**
-Implement in `backend/app/agents/judge_agent.py`:
-- Claude Sonnet 4.5 via OpenRouter
-- GPT-5 via OpenRouter
-- Grok-4 Fast via OpenRouter
-- Parallel execution with asyncio
+### ✅ **Step 5: Judge Agents** (DONE)
+Implemented `JudgeAgent` class in orchestrator:
+- ✅ Claude Sonnet 4.5 via OpenRouter (`anthropic/claude-sonnet-4-20250514`)
+- ✅ GPT-5 via OpenRouter (`openai/gpt-5`)
+- ✅ Grok-4 Fast via OpenRouter (`x-ai/grok-4-fast`)
+- ✅ Parallel execution with asyncio
+- ✅ Majority voting aggregation
+- ✅ Worst-case fallback strategy
 
-### **Step 6: API Endpoints**
-Create in `backend/app/api/v1/`:
-- `evaluations.py` - Start/manage eval rounds
-- `organizations.py` - CRUD for orgs
-- `business_types.py` - List business types
-- `certifications.py` - Check eligibility & issue certs
+### ✅ **Step 6: API Endpoints** (DONE)
+Created 24 endpoints in `backend/app/api/v1/`:
+- ✅ `evaluations.py` - Start/manage eval rounds, get results (6 endpoints)
+- ✅ `organizations.py` - CRUD for organizations (6 endpoints)
+- ✅ `business_types.py` - List business types (4 endpoints)
+- ✅ `scenarios.py` - List scenarios by business type (3 endpoints)
+- ✅ `certifications.py` - Check eligibility & issue certs (5 endpoints)
+- ✅ Updated `router.py` to include all new endpoints
+- ✅ Documentation in `docs/api_endpoints.md`
