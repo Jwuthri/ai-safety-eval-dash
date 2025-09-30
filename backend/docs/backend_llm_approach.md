@@ -13,7 +13,7 @@ Business Type → Test Scenarios → System Under Test → 3 Parallel Judge Agen
 ### Components
 1. **Business Configuration Service** - Manages business types and their test scenarios
 2. **Evaluation Orchestrator** - Runs tests and coordinates judge agents
-3. **Judge Agent Pool** - 3 parallel LLM agents (Claude Sonnet 4, GPT-4.1, Grok)
+3. **Judge Agent Pool** - 3 parallel LLM agents (Claude Sonnet 4.5, GPT-5, Grok-4)
 4. **Results Storage** - PostgreSQL for evaluation results
 5. **Human Review Interface** - API endpoints for review and re-evaluation
 6. **Certification Service** - Validates and issues AIUC-1 certificates
@@ -22,24 +22,64 @@ Business Type → Test Scenarios → System Under Test → 3 Parallel Judge Agen
 
 ## 2. Data Models
 
-### Business Types (Mock Data)
+### Architecture Overview
+```
+BusinessType (Universal Templates - only 3 predefined)
+├── "Airlines Customer Support"
+├── "API Developer Support"  
+└── "E-commerce Support"
+    ├── Scenarios (test questions for this type)
+    └── Organizations (companies using this type)
+        ├── AirCanada → uses "Airlines Customer Support"
+        ├── Pinterest → uses "API Developer Support"
+        └── Shopify → uses "E-commerce Support"
+            ├── EvaluationRound (Round 1, 2, 3...)
+            ├── AiucCertification (their certificate)
+            └── AgentIteration (their improvements)
+```
+
+### Business Types (Predefined Templates)
 ```python
-business_types = {
-    "aircanada": {
-        "name": "AirCanada",
+# Only 3 universal business types exist
+business_types = [
+    {
+        "id": "biz_airlines",
+        "name": "Airlines Customer Support",
         "industry": "Airlines",
         "use_cases": ["customer_support", "refunds", "booking"],
-        "context": "retail_airlines",
-        "test_scenarios_csv": "aircanada_scenarios.csv"
+        "context": "retail_airlines"
     },
-    "pinterest": {
-        "name": "Pinterest",
+    {
+        "id": "biz_api_support",
+        "name": "API Developer Support",
         "industry": "Social Media / Tech",
-        "use_cases": ["api_support", "content_moderation", "developer_help"],
-        "context": "tech_platform",
-        "test_scenarios_csv": "pinterest_scenarios.csv"
+        "use_cases": ["api_support", "developer_help", "content_moderation"],
+        "context": "tech_platform"
+    },
+    {
+        "id": "biz_ecommerce",
+        "name": "E-commerce Support",
+        "industry": "Retail / E-commerce",
+        "use_cases": ["merchant_support", "order_management", "disputes"],
+        "context": "online_retail"
     }
-}
+]
+
+# Organizations pick which business type they belong to
+organizations = [
+    {
+        "id": "org_aircanada",
+        "name": "AirCanada Corp",
+        "business_type_id": "biz_airlines",
+        "slug": "aircanada"
+    },
+    {
+        "id": "org_pinterest",
+        "name": "Pinterest Inc",
+        "business_type_id": "biz_api_support",
+        "slug": "pinterest"
+    }
+]
 ```
 
 ### Test Scenarios (CSV/Database)
@@ -54,8 +94,10 @@ A087,SelfHarm,General self-harm references,Token permissions,2.2 Context Embeddi
 ```
 
 **Storage Options:**
-- **Option A (Recommended):** PostgreSQL table `test_scenarios` with foreign key to `business_types`
+- **Option A (Recommended):** PostgreSQL table `scenarios` with foreign key to `business_types`
 - **Option B:** CSV files in `/backend/data/scenarios/{business_type}.csv` loaded into memory
+
+**Note:** Scenarios belong to business types (templates), not organizations. All airlines orgs share the same airline scenarios.
 
 ---
 
@@ -64,9 +106,9 @@ A087,SelfHarm,General self-harm references,Token permissions,2.2 Context Embeddi
 ### Three Parallel Judge Agents
 Each agent evaluates independently using different LLM providers for diverse perspectives:
 
-1. **Judge 1: Claude Sonnet 4** (Anthropic)
-2. **Judge 2: GPT-4.1** (OpenAI via OpenRouter)
-3. **Judge 3: Grok** (xAI via OpenRouter)
+1. **Judge 1: Claude Sonnet 4.5** (Anthropic via OpenRouter)
+2. **Judge 2: GPT-5** (OpenAI via OpenRouter)
+3. **Judge 3: Grok-4 Fast** (xAI via OpenRouter)
 
 ### Judge Evaluation Criteria
 Each judge scores responses on the **severity scale:**
@@ -122,9 +164,9 @@ Format: JSON
 # Using asyncio + agno framework
 async def evaluate_response(test_scenario, system_response):
     judges = [
-        JudgeAgent(model="anthropic/claude-sonnet-4"),
-        JudgeAgent(model="openai/gpt-4.1"),
-        JudgeAgent(model="x-ai/grok-2")
+        JudgeAgent(model="anthropic/claude-sonnet-4.5"),
+        JudgeAgent(model="openai/gpt-5"),
+        JudgeAgent(model="x-ai/grok-4-fast")
     ]
     
     # Run all 3 judges in parallel
@@ -148,7 +190,7 @@ async def evaluate_response(test_scenario, system_response):
 ```python
 POST /api/v1/evaluations/start
 {
-    "business_type": "aircanada",
+    "organization_id": "org_aircanada",  # Which company is being tested
     "round_number": 1,
     "description": "Initial safety evaluation"
 }
@@ -156,6 +198,8 @@ POST /api/v1/evaluations/start
 Response:
 {
     "evaluation_round_id": "uuid-123",
+    "organization_id": "org_aircanada",
+    "business_type_id": "biz_airlines",  # Inherited from org
     "total_scenarios": 303,
     "status": "running"
 }
@@ -179,9 +223,9 @@ for scenario in test_scenarios:
         scenario_id=scenario.id,
         system_response=system_response,
         final_grade=final_grade,
-        judge_1_response=judge_results[0],  # Claude
-        judge_2_response=judge_results[1],  # GPT-4.1
-        judge_3_response=judge_results[2],  # Grok
+        judge_1_response=judge_results[0],  # Claude Sonnet 4.5
+        judge_2_response=judge_results[1],  # GPT-5
+        judge_3_response=judge_results[2],  # Grok-4 Fast
         timestamp=datetime.utcnow()
     )
 ```
@@ -211,9 +255,20 @@ for scenario in test_scenarios:
 ### Core Tables
 
 ```sql
--- Organizations (companies using the platform)
+-- Business types (Predefined universal templates)
+CREATE TABLE business_types (
+    id UUID PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    industry VARCHAR(100),
+    use_cases TEXT[],
+    context VARCHAR(100),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Organizations (Companies using the platform, pick ONE business type)
 CREATE TABLE organizations (
     id UUID PRIMARY KEY,
+    business_type_id UUID REFERENCES business_types(id) NOT NULL,
     name VARCHAR(255) NOT NULL UNIQUE,
     slug VARCHAR(100) NOT NULL UNIQUE,
     contact_email VARCHAR(255),
@@ -223,21 +278,10 @@ CREATE TABLE organizations (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Business types (AI agents being evaluated)
-CREATE TABLE business_types (
-    id UUID PRIMARY KEY,
-    organization_id UUID REFERENCES organizations(id) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    industry VARCHAR(100),
-    use_cases TEXT[],
-    context VARCHAR(100),
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
--- Test scenarios
+-- Test scenarios (Belong to business types, shared by all orgs of that type)
 CREATE TABLE scenarios (
     id UUID PRIMARY KEY,
-    business_type_id UUID REFERENCES business_types(id),
+    business_type_id UUID REFERENCES business_types(id) NOT NULL,
     evaluation_id VARCHAR(50),
     category VARCHAR(100),
     sub_category VARCHAR(100),
@@ -251,38 +295,38 @@ CREATE TABLE scenarios (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Evaluation rounds
+-- Evaluation rounds (Track testing rounds for specific organizations)
 CREATE TABLE evaluation_rounds (
     id UUID PRIMARY KEY,
-    business_type_id UUID REFERENCES business_types(id),
+    organization_id UUID REFERENCES organizations(id) NOT NULL,
     round_number INT NOT NULL,
     description TEXT,
-    status VARCHAR(50), -- 'running', 'completed', 'under_review'
+    status VARCHAR(50), -- 'running', 'completed', 'under_review', 'failed'
     started_at TIMESTAMP DEFAULT NOW(),
     completed_at TIMESTAMP
 );
 
--- Evaluation results (stores all judge responses)
+-- Evaluation results (Stores all judge responses)
 CREATE TABLE evaluation_results (
     id UUID PRIMARY KEY,
-    evaluation_round_id UUID REFERENCES evaluation_rounds(id),
-    scenario_id UUID REFERENCES test_scenarios(id),
+    evaluation_round_id UUID REFERENCES evaluation_rounds(id) NOT NULL,
+    scenario_id UUID REFERENCES scenarios(id) NOT NULL,
     system_response TEXT NOT NULL,
     final_grade VARCHAR(10), -- PASS, P4, P3, P2, P1, P0
     
-    -- Judge 1 (Claude)
+    -- Judge 1 (Claude Sonnet 4.5)
     judge_1_grade VARCHAR(10),
     judge_1_reasoning TEXT,
     judge_1_recommendation TEXT,
     judge_1_model VARCHAR(100),
     
-    -- Judge 2 (GPT-4.1)
+    -- Judge 2 (GPT-5)
     judge_2_grade VARCHAR(10),
     judge_2_reasoning TEXT,
     judge_2_recommendation TEXT,
     judge_2_model VARCHAR(100),
     
-    -- Judge 3 (Grok)
+    -- Judge 3 (Grok-4 Fast)
     judge_3_grade VARCHAR(10),
     judge_3_reasoning TEXT,
     judge_3_recommendation TEXT,
@@ -294,7 +338,7 @@ CREATE TABLE evaluation_results (
 -- Human reviews
 CREATE TABLE human_reviews (
     id UUID PRIMARY KEY,
-    evaluation_result_id UUID REFERENCES evaluation_results(id),
+    evaluation_result_id UUID REFERENCES evaluation_results(id) NOT NULL,
     reviewer_id UUID,
     review_status VARCHAR(50), -- 'approved', 'flagged', 'needs_improvement'
     override_grade VARCHAR(10), -- Human can override judge grades
@@ -302,21 +346,21 @@ CREATE TABLE human_reviews (
     reviewed_at TIMESTAMP DEFAULT NOW()
 );
 
--- Agent iterations (tracking improvements)
+-- Agent iterations (Track improvements per organization)
 CREATE TABLE agent_iterations (
     id UUID PRIMARY KEY,
-    business_type_id UUID REFERENCES business_types(id),
+    organization_id UUID REFERENCES organizations(id) NOT NULL,
     iteration_number INT NOT NULL,
     changes_made TEXT,
     created_by UUID,
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Certifications
+-- Certifications (Issued to organizations)
 CREATE TABLE aiuc_certifications (
     id UUID PRIMARY KEY,
-    business_type_id UUID REFERENCES business_types(id),
-    evaluation_round_id UUID REFERENCES evaluation_rounds(id),
+    organization_id UUID REFERENCES organizations(id) NOT NULL,
+    evaluation_round_id UUID REFERENCES evaluation_rounds(id) NOT NULL,
     certification_status VARCHAR(50), -- 'pending', 'certified', 'revoked'
     issued_at TIMESTAMP,
     expires_at TIMESTAMP,
@@ -356,7 +400,7 @@ POST /api/v1/evaluations/results/{result_id}/review
 ```python
 POST /api/v1/evaluations/iterate
 {
-    "business_type": "aircanada",
+    "organization_id": "org_aircanada",
     "previous_round_id": "uuid-123",
     "changes_description": "Added hallucination filter, updated refusal templates",
     "retest_strategy": "failed_only"  # or "all"
@@ -406,13 +450,14 @@ def check_certification_eligibility(evaluation_round):
 ```python
 POST /api/v1/certifications/issue
 {
-    "business_type_id": "uuid-123",
+    "organization_id": "org_aircanada",
     "evaluation_round_id": "uuid-456"
 }
 
 Response:
 {
     "certification_id": "AIUC-1-2025-001",
+    "organization_id": "org_aircanada",
     "status": "certified",
     "issued_at": "2025-09-29T12:00:00Z",
     "expires_at": "2026-09-29T12:00:00Z",
@@ -427,15 +472,17 @@ Response:
 
 ### Phase 1: Foundation (MVP)
 - [ ] Create database schema and migrations
-- [ ] Mock 2 business types (AirCanada, Pinterest) with 50 test scenarios each
+- [ ] Seed 3 business types (Airlines, API Support, E-commerce)
+- [ ] Create 2 orgs (AirCanada → Airlines, Pinterest → API Support)
+- [ ] Import 50-100 test scenarios per business type from CSV
 - [ ] Build evaluation orchestrator service
-- [ ] Implement single judge agent (Claude Sonnet 4)
+- [ ] Implement single judge agent (Claude Sonnet 4.5)
 - [ ] Store results in database
 
 ### Phase 2: Multi-Judge System
-- [ ] Add GPT-4.1 and Grok judge agents
+- [ ] Add GPT-5 and Grok-4 Fast judge agents
 - [ ] Implement parallel execution with asyncio
-- [ ] Build grade aggregation logic (majority vote)
+- [ ] Build grade aggregation logic (majority vote or worst-case)
 - [ ] Add judge consensus tracking
 
 ### Phase 3: Human-in-the-Loop
@@ -455,8 +502,8 @@ Response:
 ## 9. Key Technical Decisions
 
 ### LLM Provider Strategy
-- **Primary:** OpenRouter for unified API access (GPT-4.1, Grok)
-- **Anthropic Direct:** Claude Sonnet 4 via Anthropic SDK
+- **Primary:** OpenRouter for unified API access (GPT-5, Grok-4 Fast)
+- **Anthropic Direct:** Claude Sonnet 4.5 via Anthropic SDK
 - **Fallback:** Implement retry logic with circuit breakers
 
 ### Test Data Storage
@@ -494,12 +541,15 @@ POST   /api/v1/reviews/{result_id}         - Submit review
 PUT    /api/v1/reviews/{result_id}         - Update review
 
 # Certification
-GET    /api/v1/certifications/check/{business_type_id}  - Check eligibility
-POST   /api/v1/certifications/issue                     - Issue certificate
-GET    /api/v1/certifications/{cert_id}                 - Get certificate details
+GET    /api/v1/certifications/check/{organization_id}  - Check eligibility
+POST   /api/v1/certifications/issue                    - Issue certificate
+GET    /api/v1/certifications/{cert_id}                - Get certificate details
 
-# Business & Scenarios
-GET    /api/v1/businesses                  - List business types
+# Business Types & Organizations
+GET    /api/v1/business-types              - List business type templates
+POST   /api/v1/business-types              - Create new business type
+GET    /api/v1/organizations               - List organizations
+POST   /api/v1/organizations               - Create new organization
 GET    /api/v1/scenarios?business_type=X   - Get test scenarios
 POST   /api/v1/scenarios/import            - Import CSV scenarios
 ```
@@ -508,8 +558,10 @@ POST   /api/v1/scenarios/import            - Import CSV scenarios
 
 ## Next Steps
 1. Set up database migrations with new schema
-2. Create mock data for AirCanada + Pinterest (100 scenarios each from CSV structure)
-3. Build `EvaluationOrchestrator` service with 3 judge agents
-4. Implement parallel evaluation with asyncio
-5. Add human review endpoints
-6. Build certification logic
+2. Seed 3 business types: Airlines, API Support, E-commerce
+3. Create 2 organizations: AirCanada (Airlines), Pinterest (API Support)
+4. Import test scenarios from CSV (100 per business type)
+5. Build `EvaluationOrchestrator` service with 3 judge agents (Claude Sonnet 4.5, GPT-5, Grok-4 Fast)
+6. Implement parallel evaluation with asyncio
+7. Add human review endpoints
+8. Build certification logic
