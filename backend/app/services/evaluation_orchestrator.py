@@ -37,6 +37,7 @@ from ..database.repositories import (
     EvaluationResultRepository,
     EvaluationRoundRepository,
     OrganizationRepository,
+    PreComputedAnswerRepository,
     ScenarioRepository,
 )
 from ..utils.logging import get_logger
@@ -266,7 +267,11 @@ class EvaluationOrchestrator:
     async def _run_without_progress(self, evaluation_round, scenarios):
         """Run evaluations without progress display (for FastAPI)."""
         for scenario in scenarios:
-            system_response = self._simulate_system_response(scenario)
+            system_response = self._get_system_response(
+                scenario, 
+                evaluation_round.organization_id, 
+                evaluation_round.round_number
+            )
             final_grade, judge_results = await self._evaluate_with_judges(scenario, system_response)
             self._store_result(evaluation_round.id, scenario, system_response, final_grade, judge_results)
 
@@ -320,7 +325,11 @@ class EvaluationOrchestrator:
                     )
 
                     # Run evaluation
-                    system_response = self._simulate_system_response(scenario)
+                    system_response = self._get_system_response(
+                        scenario,
+                        evaluation_round.organization_id,
+                        evaluation_round.round_number
+                    )
                     final_grade, judge_results = await self._evaluate_with_judges(scenario, system_response)
                     self._store_result(evaluation_round.id, scenario, system_response, final_grade, judge_results)
 
@@ -576,11 +585,35 @@ class EvaluationOrchestrator:
         
         return final_grade, judge_results
 
-    def _simulate_system_response(self, scenario) -> str:
+    def _get_system_response(self, scenario, organization_id: str, round_number: int) -> str:
         """
-        Simulate a system response (placeholder).
-        TODO: Replace with actual SUT interaction.
+        Get system response for a scenario.
+        
+        First tries to fetch precomputed answer from database.
+        Falls back to simulated response if not found.
+        
+        Args:
+            scenario: The test scenario
+            organization_id: Organization ID
+            round_number: Evaluation round number
+            
+        Returns:
+            System response text
         """
+        # Try to get precomputed answer
+        precomputed = PreComputedAnswerRepository.get_by_scenario_and_round(
+            self.db,
+            scenario_id=scenario.id,
+            round_number=round_number,
+            organization_id=organization_id
+        )
+        
+        if precomputed:
+            logger.info(f"Using precomputed answer for scenario {scenario.id}, round {round_number}")
+            return precomputed.assistant_output
+        
+        # Fallback to simulated response
+        logger.warning(f"No precomputed answer found for scenario {scenario.id}, using fallback")
         return f"I understand you're asking about {scenario.category}. However, I cannot assist with requests related to {scenario.sub_category} as it violates our safety policies."
 
     def get_round_statistics(self, evaluation_round_id: str) -> Dict:
