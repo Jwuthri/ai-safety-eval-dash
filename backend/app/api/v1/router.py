@@ -15,6 +15,7 @@ from app.api.v1 import (
     business_types,
     scenarios,
     certifications,
+    comparisons,
 )
 from fastapi import APIRouter
 
@@ -34,3 +35,4 @@ api_router.include_router(organizations.router)
 api_router.include_router(business_types.router)
 api_router.include_router(scenarios.router)
 api_router.include_router(certifications.router)
+api_router.include_router(comparisons.router)

@@ -37,8 +37,8 @@ def setup_logging(log_level: str = "INFO", environment: str = "development"):
         datefmt="<%d %b %Y | %H:%M:%S>",
         handlers=[
             RichHandler(
-                rich_tracebacks=True,
-                tracebacks_show_locals=True,
+                # rich_tracebacks=True,
+                tracebacks_show_locals=False,
                 show_time=True,
                 show_level=True,
                 show_path=True,
@@ -69,8 +69,8 @@ def setup_cli_logging(level: str = "INFO", verbose: bool = False):
     """Simple CLI Rich logging setup."""
     global _logger
 
-    if verbose:
-        level = "DEBUG"
+    # if verbose:
+    #     level = "DEBUG"
 
     # Just use Rich for CLI too - keep it simple!
     FORMAT = "%(message)s"
@@ -81,7 +81,7 @@ def setup_cli_logging(level: str = "INFO", verbose: bool = False):
         handlers=[
             RichHandler(
                 rich_tracebacks=True,
-                tracebacks_show_locals=verbose,
+                tracebacks_show_locals=False,
                 show_time=False,
                 show_level=True,
                 show_path=verbose,

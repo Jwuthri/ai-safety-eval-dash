@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...database.repositories import ScenarioRepository, BusinessTypeRepository
-from ...models.evaluation import ScenarioResponse
+from ...models.scenario import ScenarioResponse
 
 router = APIRouter(prefix="/scenarios", tags=["scenarios"])
 

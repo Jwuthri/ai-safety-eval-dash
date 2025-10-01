@@ -18,7 +18,7 @@ from ...database.repositories import (
     EvaluationResultRepository,
     OrganizationRepository,
 )
-from ...models.evaluation import (
+from ...models.certification import (
     CertificationResponse,
     CertificationCreate,
 )

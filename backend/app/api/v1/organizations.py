@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...database.repositories import OrganizationRepository, BusinessTypeRepository
-from ...models.evaluation import (
+from ...models.organization import (
     OrganizationResponse,
     OrganizationCreate,
     OrganizationUpdate,

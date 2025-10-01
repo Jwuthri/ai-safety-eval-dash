@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ...database import get_db
+from ...database.models import EvaluationRound, EvaluationResult
 from ...database.repositories import (
     EvaluationRoundRepository,
     EvaluationResultRepository,
@@ -86,7 +87,7 @@ def get_round_results(
         raise HTTPException(status_code=404, detail=f"Evaluation round {round_id} not found")
     
     # Get results
-    results = db.query(EvaluationResultRepository.model).filter_by(
+    results = db.query(EvaluationResult).filter_by(
         evaluation_round_id=round_id
     ).offset(offset).limit(limit).all()
     
@@ -131,9 +132,9 @@ def list_organization_rounds(
         raise HTTPException(status_code=404, detail=f"Organization {organization_id} not found")
     
     # Get rounds
-    rounds = db.query(EvaluationRoundRepository.model).filter_by(
+    rounds = db.query(EvaluationRound).filter_by(
         organization_id=organization_id
-    ).order_by(EvaluationRoundRepository.model.started_at.desc()).limit(limit).all()
+    ).order_by(EvaluationRound.started_at.desc()).limit(limit).all()
     
     return rounds
 

@@ -2,28 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    --background: 10 14 26; /* #0a0e1a */
+    --foreground: 255 255 255;
+    --card: 26 31 53;
+    --card-foreground: 255 255 255;
+    --primary: 139 92 246;
+    --primary-foreground: 255 255 255;
+    --secondary: 16 185 129;
+    --secondary-foreground: 255 255 255;
+    --muted: 31 41 55;
+    --muted-foreground: 156 163 175;
+    --accent: 245 158 11;
+    --accent-foreground: 255 255 255;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --border: 55 65 81;
+    --input: 31 41 55;
+    --ring: 139 92 246;
   }
-}
-
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
 }
 
 @layer base {
@@ -32,27 +30,78 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-@layer components {
-  .chat-message {
-    @apply p-4 rounded-lg mb-4 max-w-[80%] break-words;
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
   }
+}
 
-  .chat-message.user {
-    @apply bg-blue-500 text-white ml-auto;
-  }
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
 
-  .chat-message.assistant {
-    @apply bg-gray-100 text-gray-900 mr-auto dark:bg-gray-800 dark:text-gray-100;
-  }
+::-webkit-scrollbar-track {
+  background: rgb(10, 14, 26);
+}
 
-  .typing-dots {
-    @apply flex space-x-1;
-  }
+::-webkit-scrollbar-thumb {
+  background: rgb(139, 92, 246);
+  border-radius: 4px;
+}
 
-  .typing-dot {
-    @apply w-2 h-2 bg-gray-500 rounded-full animate-pulse;
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(124, 58, 237);
+}
+
+/* Terminal cursor animation */
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
   }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+.terminal-cursor {
+  animation: blink 1s infinite;
+}
+
+/* Gradient text */
+.gradient-text {
+  @apply bg-gradient-to-r from-purple-400 via-violet-400 to-purple-600 bg-clip-text text-transparent;
+}
+
+/* Neon glow effect */
+.neon-glow {
+  text-shadow: 
+    0 0 10px rgba(139, 92, 246, 0.5),
+    0 0 20px rgba(139, 92, 246, 0.3),
+    0 0 30px rgba(139, 92, 246, 0.2);
+}
+
+/* Card hover effects */
+.card-hover {
+  @apply transition-all duration-300 hover:border-purple-500/40;
+}
+
+.card-hover:hover {
+  box-shadow: 0 0 40px rgba(139, 92, 246, 0.3);
+}
+
+/* Button glow on hover */
+.btn-glow {
+  @apply transition-all duration-200;
+}
+
+.btn-glow:hover {
+  box-shadow: 
+    0 0 20px rgba(139, 92, 246, 0.4),
+    0 0 40px rgba(139, 92, 246, 0.2);
 }

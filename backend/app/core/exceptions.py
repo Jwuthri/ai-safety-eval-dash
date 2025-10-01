@@ -64,6 +64,11 @@ class ErrorContext(BaseModel):
     stack_trace: Optional[List[str]] = None
     additional_data: Dict[str, Any] = {}
 
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
+
 
 class BaseAppException(Exception):
     """

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from ...database import get_db
 from ...database.repositories import BusinessTypeRepository
-from ...models.evaluation import BusinessTypeResponse
+from ...models.business_type import BusinessTypeResponse
 
 router = APIRouter(prefix="/business-types", tags=["business-types"])
 
