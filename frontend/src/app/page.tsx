@@ -1,20 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from "next/link";
-import { useRouter } from 'next/navigation';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import InteractiveTerminal from '@/components/InteractiveTerminal';
 
 export default function Home() {
-  const router = useRouter();
-  const { organizations, selectedOrg, setSelectedOrg, currentOrganization, loading } = useOrganization();
-  const [showOrgSelector, setShowOrgSelector] = useState(false);
-
-  useEffect(() => {
-    // If org is already selected, could redirect to dashboard
-    // For now, just show the selector option
-  }, [selectedOrg]);
+  const { loading } = useOrganization();
 
   if (loading) {
     return (
@@ -59,107 +50,8 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Terminal Demo */}
-          <div className="mt-16 mx-auto max-w-4xl">
-            <div className="rounded-2xl bg-card/50 backdrop-blur-sm border border-purple-500/20 shadow-purple-glow overflow-hidden">
-              {/* Terminal Header */}
-              <div className="flex items-center gap-2 px-4 py-3 bg-card/80 border-b border-purple-500/20">
-                <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                  <div className="w-3 h-3 rounded-full bg-green-500" />
-                </div>
-                <div className="flex-1 text-center">
-                  <span className="text-sm text-gray-400 font-mono">ai-safety-terminal</span>
-                </div>
-              </div>
-
-              {/* Terminal Content */}
-              <div className="p-6 font-mono text-sm md:text-base">
-                <div className="flex items-center gap-2 text-green-400">
-                  <span>$</span>
-                  <span className="text-purple-400">evaluate</span>
-                  <span className="text-gray-300">--organization</span>
-                  <span className="text-blue-400">"AirCanada"</span>
-                  <span className="text-gray-300">--round</span>
-                  <span className="text-blue-400">1</span>
-                  <span className="animate-pulse">▊</span>
-                </div>
-                <div className="mt-4 text-gray-400 space-y-1">
-                  <div>✓ Running 314 safety scenarios...</div>
-                  <div>✓ 3 LLM judges: Claude Sonnet 4.5, GPT-5, Grok-4</div>
-                  <div className="text-purple-400">→ Pass Rate: 77.9% → 94.1% → 97.4%</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Organization Selector */}
-          <div className="mt-12 mx-auto max-w-lg">
-            <div className="text-center mb-6">
-              <h3 className="text-2xl font-bold text-white mb-2">Select Your Organization</h3>
-              <p className="text-gray-400">Choose which organization to evaluate</p>
-            </div>
-
-            {organizations.length === 0 ? (
-              <div className="p-8 rounded-2xl bg-card/50 border border-purple-500/20 text-center">
-                <p className="text-gray-400 mb-4">No organizations found</p>
-                <Link
-                  href="/dashboard"
-                  className="text-purple-400 hover:text-purple-300 font-medium"
-                >
-                  Create one in Dashboard →
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {organizations.map((org) => (
-                  <motion.button
-                    key={org.id}
-                    onClick={() => {
-                      setSelectedOrg(org.id);
-                      setTimeout(() => router.push('/dashboard'), 300);
-                    }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`w-full p-6 rounded-xl border-2 text-left transition-all ${
-                      selectedOrg === org.id
-                        ? 'bg-purple-600/20 border-purple-500 shadow-lg shadow-purple-500/20'
-                        : 'bg-card/30 border-purple-500/20 hover:border-purple-500/50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-xl font-semibold text-white mb-1">{org.name}</h4>
-                        <p className="text-sm text-gray-400">{org.slug}</p>
-                      </div>
-                      {selectedOrg === org.id && (
-                        <div className="flex items-center gap-2 text-green-400">
-                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            )}
-
-            {currentOrganization && (
-              <div className="mt-6 text-center">
-                <Link
-                  href="/dashboard"
-                  className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-semibold text-white bg-purple-600 rounded-xl hover:bg-purple-700 transition-all duration-200 shadow-lg hover:shadow-purple-glow"
-                >
-                  Continue to Dashboard
-                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </Link>
-              </div>
-            )}
-          </div>
+          {/* Interactive Terminal */}
+          <InteractiveTerminal />
 
           {/* Trust Badges */}
           <div className="mt-16 flex flex-wrap justify-center items-center gap-8 text-sm text-gray-400">
