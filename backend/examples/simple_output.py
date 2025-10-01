@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 # from backend.app.config import get_settings
 
-
+api_key=""
 class MovieScript(BaseModel):
     setting: str = Field(
         ...,
@@ -34,7 +34,6 @@ class MovieScript(BaseModel):
         description="A compelling three-sentence plot summary: Setup, Conflict, and Stakes. Hook readers with intrigue and emotion.",
     )
 
-api_key = "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"
 # Agent that uses JSON mode
 json_mode_agent = Agent(
     model=OpenRouter(id="openai/gpt-5-mini", api_key=api_key),

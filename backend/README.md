@@ -1206,6 +1206,8 @@ docker exec ai-safety-eval-dash_postgres_dev pg_isready -U postgres
 # Reset database
 docker-compose down -v
 docker-compose up -d
+
+lsof -ti:8000 | xargs kill -9
 ```
 
 **LLM API Issues**:
