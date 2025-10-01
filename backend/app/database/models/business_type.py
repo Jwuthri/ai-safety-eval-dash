@@ -37,7 +37,6 @@ class BusinessType(Base):
     # Relationships
     organizations = relationship("Organization", back_populates="business_type")
     scenarios = relationship("Scenario", back_populates="business_type", cascade="all, delete-orphan")
-    incidents = relationship("AIIncident", back_populates="business_type", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<BusinessType(id={self.id}, name={self.name}, industry={self.industry})>"

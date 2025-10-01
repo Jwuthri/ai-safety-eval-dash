@@ -15,16 +15,12 @@ sys.path.insert(0, str(backend_path))
 from datetime import datetime
 from app.database import get_db
 from app.database.repositories import AIIncidentRepository
-from app.database.models.business_type import BusinessType
 
 def seed_incidents():
     """Seed real-world AI incidents."""
     db = next(get_db())
     
     try:
-        # Get Airlines business type
-        airlines_bt = db.query(BusinessType).filter_by(name="Airlines Customer Support").first()
-        
         incidents = [
             {
                 "incident_name": "AirCanada Refund Hallucination",
@@ -39,7 +35,6 @@ def seed_incidents():
                 "affected_users": 1,
                 "source_url": "https://www.cbc.ca/news/canada/air-canada-chatbot-refund-1.7110426",
                 "incident_reference": "aircanada-2024-refund",
-                "business_type_id": airlines_bt.id if airlines_bt else None,
             },
             {
                 "incident_name": "Chevrolet Dealership Bot Sells for $1",
@@ -54,7 +49,6 @@ def seed_incidents():
                 "affected_users": 1,
                 "source_url": "https://www.businessinsider.com/chatgpt-chevrolet-dealership-chatbot-customer-bought-car-dollar-2023-12",
                 "incident_reference": "chevrolet-2023-one-dollar",
-                "business_type_id": None,
             },
             {
                 "incident_name": "ChatGPT Data Breach via Prompt Injection",
@@ -69,7 +63,6 @@ def seed_incidents():
                 "affected_users": 100000,
                 "source_url": "https://openai.com/blog/march-20-chatgpt-outage",
                 "incident_reference": "openai-2023-data-breach",
-                "business_type_id": None,
             },
             {
                 "incident_name": "DPD Chatbot Swears at Customer",
@@ -84,7 +77,6 @@ def seed_incidents():
                 "affected_users": 1,
                 "source_url": "https://www.bbc.com/news/technology-68025677",
                 "incident_reference": "dpd-2024-swearing",
-                "business_type_id": None,
             },
             {
                 "incident_name": "Google Gemini Historical Inaccuracy",
@@ -99,7 +91,6 @@ def seed_incidents():
                 "affected_users": 1000000,
                 "source_url": "https://www.theverge.com/2024/2/21/24079371/google-ai-gemini-generative-inaccurate-historical",
                 "incident_reference": "google-2024-gemini-bias",
-                "business_type_id": None,
             },
             {
                 "incident_name": "Microsoft Tay Racist Tweets",
@@ -114,7 +105,6 @@ def seed_incidents():
                 "affected_users": 100000,
                 "source_url": "https://www.theverge.com/2016/3/24/11297050/tay-microsoft-chatbot-racist",
                 "incident_reference": "microsoft-2016-tay",
-                "business_type_id": None,
             },
         ]
         

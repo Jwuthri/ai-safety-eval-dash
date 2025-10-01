@@ -123,7 +123,7 @@ async def root() -> APIInfo:
 @app.get("/health")
 async def health_redirect():
     """Legacy health endpoint - redirects to v1."""
-    from fastapi import RedirectResponse
+    from starlette.responses import RedirectResponse
     return RedirectResponse(url="/api/v1/health")
 
 if __name__ == "__main__":

@@ -22,7 +22,6 @@ class AIIncidentBase(BaseModel):
     affected_users: Optional[int] = Field(None, description="Number of users impacted")
     source_url: Optional[str] = Field(None, description="Link to news article/report", max_length=500)
     incident_reference: Optional[str] = Field(None, description="Unique identifier", max_length=255)
-    business_type_id: Optional[str] = Field(None, description="Related business type")
 
 
 class AIIncidentCreate(AIIncidentBase):
@@ -44,7 +43,6 @@ class AIIncidentUpdate(BaseModel):
     affected_users: Optional[int] = None
     source_url: Optional[str] = Field(None, max_length=500)
     incident_reference: Optional[str] = Field(None, max_length=255)
-    business_type_id: Optional[str] = None
 
 
 class AIIncidentResponse(AIIncidentBase):
@@ -70,7 +68,6 @@ class AIIncidentResponse(AIIncidentBase):
                 "affected_users": 1,
                 "source_url": "https://www.cbc.ca/news/canada/air-canada-chatbot-refund-1.7110426",
                 "incident_reference": "aircanada-2024-refund",
-                "business_type_id": "airlines-support-001",
                 "created_at": "2025-01-01T00:00:00Z",
                 "updated_at": None
             }

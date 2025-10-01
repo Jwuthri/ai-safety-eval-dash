@@ -4,7 +4,26 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import IncidentCard from '@/components/safety/IncidentCard';
+import { SafeguardCard } from '@/components/safety/SafeguardCard';
 import type { AIIncident } from '@/types/safety';
+
+interface Safeguard {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  why_it_works?: string;
+  implementation_type: string;
+  implementation_details?: any;
+  aiuc_requirement?: string;
+  compliance_level?: string;
+  effectiveness_rating?: string;
+  reduces_severity?: string[];
+  detection_method?: string;
+  automated_response?: string;
+  priority?: string;
+  effectiveness_note?: string;
+}
 
 export default function SafetyStoryPage() {
   const { currentOrganization } = useOrganization();
@@ -12,6 +31,8 @@ export default function SafetyStoryPage() {
   const [loading, setLoading] = useState(true);
   const [incidentStats, setIncidentStats] = useState<any>(null);
   const [selectedIncident, setSelectedIncident] = useState<AIIncident | null>(null);
+  const [safeguards, setSafeguards] = useState<Safeguard[]>([]);
+  const [loadingSafeguards, setLoadingSafeguards] = useState(false);
 
   useEffect(() => {
     loadIncidents();
@@ -61,6 +82,27 @@ export default function SafetyStoryPage() {
     } catch (error) {
       console.error('Failed to load incident stats:', error);
     }
+  }
+
+  async function loadSafeguardsForIncident(incidentId: string) {
+    setLoadingSafeguards(true);
+    try {
+      const response = await fetch(`http://localhost:8000/api/v1/safeguards/for-incident/${incidentId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSafeguards(data);
+      }
+    } catch (error) {
+      console.error('Failed to load safeguards:', error);
+      setSafeguards([]);
+    } finally {
+      setLoadingSafeguards(false);
+    }
+  }
+
+  function handleIncidentClick(incident: AIIncident) {
+    setSelectedIncident(incident);
+    loadSafeguardsForIncident(incident.id);
   }
 
   if (loading) {
@@ -213,16 +255,101 @@ export default function SafetyStoryPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {incidents.map((incident) => (
-                <IncidentCard
+                <div 
                   key={incident.id}
-                  incident={incident}
-                  showDetails={selectedIncident?.id === incident.id}
-                  onViewDetails={(inc) => setSelectedIncident(selectedIncident?.id === inc.id ? null : inc)}
-                />
+                  onClick={() => handleIncidentClick(incident)}
+                  className={`cursor-pointer transition-all rounded-xl ${
+                    selectedIncident?.id === incident.id 
+                      ? 'ring-2 ring-purple-500' 
+                      : 'hover:ring-1 hover:ring-purple-500/50'
+                  }`}
+                >
+                  <IncidentCard
+                    incident={incident}
+                    showDetails={selectedIncident?.id === incident.id}
+                    onViewDetails={(inc) => handleIncidentClick(inc)}
+                  />
+                </div>
               ))}
             </div>
           )}
         </div>
+
+        {/* Safeguards Section - Shows when incident selected */}
+        {selectedIncident && (
+          <div className="mb-12 animate-fadeIn">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-2">
+                  🛡️ How to Prevent This
+                </h2>
+                <p className="text-gray-400">
+                  Recommended safeguards for <span className="text-purple-400 font-semibold">{selectedIncident.incident_name}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedIncident(null);
+                  setSafeguards([]);
+                }}
+                className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition-colors text-sm"
+              >
+                Close
+              </button>
+            </div>
+
+            {loadingSafeguards ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : safeguards.length === 0 ? (
+              <div className="text-center py-16 bg-card/20 rounded-2xl border border-purple-500/20">
+                <div className="text-6xl mb-4">🔒</div>
+                <h3 className="text-xl font-semibold text-white mb-2">No Safeguards Found</h3>
+                <p className="text-gray-400">Safeguards for this incident haven't been mapped yet</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {safeguards.map((safeguard) => (
+                  <SafeguardCard key={safeguard.id} safeguard={safeguard} showCode={true} />
+                ))}
+
+                {/* Implementation Summary */}
+                <div className="mt-8 p-6 rounded-2xl bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-purple-500/30">
+                  <h3 className="text-xl font-semibold text-white mb-4">
+                    ✅ Implementation Checklist
+                  </h3>
+                  <ul className="space-y-3">
+                    {safeguards
+                      .sort((a, b) => {
+                        const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+                        return (priorityOrder[a.priority as keyof typeof priorityOrder] || 2) - 
+                               (priorityOrder[b.priority as keyof typeof priorityOrder] || 2);
+                      })
+                      .map((safeguard) => (
+                        <li key={safeguard.id} className="flex items-start gap-3">
+                          <span className={`text-xl ${
+                            safeguard.priority === 'critical' ? 'text-red-400' :
+                            safeguard.priority === 'high' ? 'text-orange-400' :
+                            'text-yellow-400'
+                          }`}>
+                            {safeguard.priority === 'critical' ? '🔴' : 
+                             safeguard.priority === 'high' ? '🟠' : '🟡'}
+                          </span>
+                          <div className="flex-1">
+                            <span className="text-white font-medium">{safeguard.name}</span>
+                            <span className="text-gray-400 ml-2">
+                              ({safeguard.implementation_type.replace(/_/g, ' ')})
+                            </span>
+                          </div>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Stats Section */}
         {incidentStats && (

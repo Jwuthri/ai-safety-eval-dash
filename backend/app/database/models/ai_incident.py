@@ -48,15 +48,9 @@ class AIIncident(Base):
     source_url = Column(String(500), nullable=True)  # Link to news article/report
     incident_reference = Column(String(255), nullable=True, unique=True)  # Unique identifier
     
-    # Mapping to our system
-    business_type_id = Column(String, ForeignKey("business_types.id"), nullable=True)
-    
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Relationships
-    business_type = relationship("BusinessType", back_populates="incidents")
 
     def __repr__(self):
         return f"<AIIncident(name={self.incident_name}, company={self.company}, severity={self.severity})>"

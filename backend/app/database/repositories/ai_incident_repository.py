@@ -42,7 +42,6 @@ class AIIncidentRepository:
         severity: Optional[str] = None,
         harm_type: Optional[str] = None,
         company: Optional[str] = None,
-        business_type_id: Optional[str] = None,
     ) -> List[AIIncident]:
         """List AI Incidents with optional filters."""
         query = db.query(AIIncident)
@@ -53,8 +52,6 @@ class AIIncidentRepository:
             query = query.filter(AIIncident.harm_type == harm_type)
         if company:
             query = query.filter(AIIncident.company.ilike(f"%{company}%"))
-        if business_type_id:
-            query = query.filter(AIIncident.business_type_id == business_type_id)
 
         return query.order_by(AIIncident.date_occurred.desc().nullslast()).offset(skip).limit(limit).all()
 
@@ -85,24 +82,16 @@ class AIIncidentRepository:
         return True
 
     @classmethod
-    def count_by_severity(cls, db: Session, business_type_id: Optional[str] = None) -> dict:
+    def count_by_severity(cls, db: Session) -> dict:
         """Count incidents by severity level."""
         query = db.query(AIIncident.severity, func.count(AIIncident.id))
-
-        if business_type_id:
-            query = query.filter(AIIncident.business_type_id == business_type_id)
-
         results = query.group_by(AIIncident.severity).all()
         return {severity: count for severity, count in results}
 
     @classmethod
-    def count_by_harm_type(cls, db: Session, business_type_id: Optional[str] = None) -> dict:
+    def count_by_harm_type(cls, db: Session) -> dict:
         """Count incidents by harm type."""
         query = db.query(AIIncident.harm_type, func.count(AIIncident.id))
-
-        if business_type_id:
-            query = query.filter(AIIncident.business_type_id == business_type_id)
-
         results = query.group_by(AIIncident.harm_type).all()
         return {harm_type: count for harm_type, count in results}
 

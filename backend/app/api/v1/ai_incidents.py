@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from ...database import get_db
-from ...database.repositories import AIIncidentRepository, BusinessTypeRepository
+from ...database.repositories import AIIncidentRepository
 from ...models.ai_incident import (
     AIIncidentCreate,
     AIIncidentUpdate,
@@ -34,15 +34,6 @@ def create_incident(
     
     Track real-world AI failures (like AirCanada) to map to preventive tests.
     """
-    # Verify business type exists if provided
-    if request.business_type_id:
-        business_type = BusinessTypeRepository.get_by_id(db, request.business_type_id)
-        if not business_type:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Business type {request.business_type_id} not found"
-            )
-    
     # Check if incident_reference already exists
     if request.incident_reference:
         existing = AIIncidentRepository.get_by_reference(db, request.incident_reference)
@@ -65,7 +56,6 @@ def list_incidents(
     severity: Optional[str] = Query(None, description="Filter by severity (P0-P4)"),
     harm_type: Optional[str] = Query(None, description="Filter by harm type"),
     company: Optional[str] = Query(None, description="Filter by company name (fuzzy)"),
-    business_type_id: Optional[str] = Query(None, description="Filter by business type"),
 ):
     """
     List all AI incidents with optional filters.
@@ -79,7 +69,6 @@ def list_incidents(
         severity=severity,
         harm_type=harm_type,
         company=company,
-        business_type_id=business_type_id,
     )
     return incidents
 
@@ -87,10 +76,9 @@ def list_incidents(
 @router.get("/stats/severity")
 def get_severity_stats(
     db: Session = Depends(get_db),
-    business_type_id: Optional[str] = Query(None, description="Filter by business type"),
 ):
     """Get incident count breakdown by severity level."""
-    stats = AIIncidentRepository.count_by_severity(db, business_type_id)
+    stats = AIIncidentRepository.count_by_severity(db)
     return {
         "severity_breakdown": stats,
         "total_incidents": sum(stats.values())
@@ -100,10 +88,9 @@ def get_severity_stats(
 @router.get("/stats/harm-types")
 def get_harm_type_stats(
     db: Session = Depends(get_db),
-    business_type_id: Optional[str] = Query(None, description="Filter by business type"),
 ):
     """Get incident count breakdown by harm type."""
-    stats = AIIncidentRepository.count_by_harm_type(db, business_type_id)
+    stats = AIIncidentRepository.count_by_harm_type(db)
     return {
         "harm_type_breakdown": stats,
         "total_incidents": sum(stats.values())
@@ -133,15 +120,6 @@ def update_incident(
     db: Session = Depends(get_db),
 ):
     """Update an existing AI incident."""
-    # Verify business type exists if being updated
-    if request.business_type_id:
-        business_type = BusinessTypeRepository.get_by_id(db, request.business_type_id)
-        if not business_type:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Business type {request.business_type_id} not found"
-            )
-    
     # Update incident
     incident = AIIncidentRepository.update(
         db,
