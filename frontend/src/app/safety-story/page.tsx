@@ -124,7 +124,13 @@ export default function SafetyStoryPage() {
                   Safety Story
                 </Link>
                 <Link href="/taxonomy" className="text-gray-400 hover:text-purple-400 transition-colors">
-                  Taxonomy
+                  AI Scenarios
+                </Link>
+                <Link href="/evaluations/run" className="text-gray-400 hover:text-purple-400 transition-colors">
+                  Run Evaluation
+                </Link>
+                <Link href="/generated-scenarios" className="text-gray-400 hover:text-purple-400 transition-colors">
+                  Generate Scenarios
                 </Link>
               </nav>
             </div>

@@ -16,6 +16,7 @@ from app.api.v1 import (
     ai_incidents,
     safeguards,
     scenarios,
+    generated_scenarios,
     certifications,
     comparisons,
     human_reviews,
@@ -39,6 +40,7 @@ api_router.include_router(business_types.router)
 api_router.include_router(ai_incidents.router)
 api_router.include_router(safeguards.router)
 api_router.include_router(scenarios.router)
+api_router.include_router(generated_scenarios.router)
 api_router.include_router(certifications.router)
 api_router.include_router(comparisons.router)
 api_router.include_router(human_reviews.router)

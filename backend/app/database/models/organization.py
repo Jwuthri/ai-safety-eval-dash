@@ -29,6 +29,7 @@ class Organization(Base):
     
     name = Column(String(255), nullable=False, unique=True, index=True)
     slug = Column(String(100), nullable=False, unique=True, index=True)  # e.g., "aircanada"
+    description = Column(String, nullable=True)  # Description for scenario generation
     
     # Contact info
     contact_email = Column(String(255), nullable=True)

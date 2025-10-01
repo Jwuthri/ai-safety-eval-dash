@@ -12,6 +12,7 @@ from .chat_session import ChatSessionRepository
 from .completion import CompletionRepository
 from .evaluation_result import EvaluationResultRepository
 from .evaluation_round import EvaluationRoundRepository
+from .generated_scenario import GeneratedScenarioRepository
 from .human_review import HumanReviewRepository
 from .model_converter import ModelConverter
 from .organization import OrganizationRepository
@@ -35,6 +36,7 @@ __all__ = [
     "AIIncidentRepository",
     "OrganizationRepository",
     "ScenarioRepository",
+    "GeneratedScenarioRepository",
     "EvaluationRoundRepository",
     "EvaluationResultRepository",
     "HumanReviewRepository",

@@ -68,3 +68,32 @@ export interface IncidentCardProps {
   onViewDetails?: (incident: AIIncident) => void;
 }
 
+export interface GeneratedScenario {
+  id: string;
+  organization_id: string;
+  business_type_id: string;
+  category: string | null;
+  sub_category: string | null;
+  input_topic: string | null;
+  methodology: string | null;
+  input_prompt: string;
+  expected_behavior: string | null;
+  tactics: string[];
+  use_case: string | null;
+  incident_reference: string | null;
+  generation_prompt: string | null;
+  model_used: string | null;
+  created_at: string;
+}
+
+export interface GenerateScenarioRequest {
+  organization_id: string;
+  count: number;
+}
+
+export interface GenerateScenarioResponse {
+  organization_id: string;
+  scenarios_generated: number;
+  scenarios: GeneratedScenario[];
+}
+

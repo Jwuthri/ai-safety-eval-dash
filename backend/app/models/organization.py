@@ -12,6 +12,7 @@ class OrganizationBase(BaseModel):
     """Base organization model."""
     name: str = Field(..., description="Organization name", max_length=255)
     slug: str = Field(..., description="URL-friendly slug", max_length=100)
+    description: Optional[str] = Field(None, description="Organization description for AI scenario generation")
     contact_email: Optional[str] = Field(None, description="Contact email")
     contact_name: Optional[str] = Field(None, description="Contact person name")
     is_active: bool = Field(True, description="Organization status")

@@ -81,6 +81,7 @@ export default function DashboardPage() {
   // New org creation form
   const [newOrgName, setNewOrgName] = useState('');
   const [newOrgSlug, setNewOrgSlug] = useState('');
+  const [newOrgDescription, setNewOrgDescription] = useState('');
   const [newOrgBusinessType, setNewOrgBusinessType] = useState('');
   const [newOrgContactEmail, setNewOrgContactEmail] = useState('');
   const [newOrgContactName, setNewOrgContactName] = useState('');
@@ -170,6 +171,7 @@ export default function DashboardPage() {
       const newOrg = await api.createOrganization({
         name: newOrgName,
         slug: newOrgSlug,
+        description: newOrgDescription || null,
         business_type_id: newOrgBusinessType,
         contact_email: newOrgContactEmail || null,
         contact_name: newOrgContactName || null,
@@ -185,6 +187,7 @@ export default function DashboardPage() {
       setShowCreateOrgModal(false);
       setNewOrgName('');
       setNewOrgSlug('');
+      setNewOrgDescription('');
       setNewOrgBusinessType('');
       setNewOrgContactEmail('');
       setNewOrgContactName('');
@@ -259,11 +262,14 @@ export default function DashboardPage() {
                 <Link href="/safety-story" className="text-gray-400 hover:text-purple-400 transition-colors">
                   Safety Story
                 </Link>
+                <Link href="/taxonomy" className="text-gray-400 hover:text-purple-400 transition-colors">
+                  AI Scenarios
+                </Link>
                 <Link href="/evaluations/run" className="text-gray-400 hover:text-purple-400 transition-colors">
                   Run Evaluation
                 </Link>
-                <Link href="/taxonomy" className="text-gray-400 hover:text-purple-400 transition-colors">
-                  Taxonomy
+                <Link href="/generated-scenarios" className="text-gray-400 hover:text-purple-400 transition-colors">
+                  Generate Scenarios
                 </Link>
               </nav>
             </div>
@@ -1098,6 +1104,23 @@ export default function DashboardPage() {
                     placeholder="e.g., aircanada"
                     className="w-full px-4 py-3 bg-background border border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors font-mono text-sm"
                   />
+                </div>
+
+                {/* Description (for AI scenario generation) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Description <span className="text-xs text-gray-500">(helps AI generate better scenarios)</span>
+                  </label>
+                  <textarea
+                    value={newOrgDescription}
+                    onChange={(e) => setNewOrgDescription(e.target.value)}
+                    placeholder="e.g., We're an airline providing customer support for flight bookings, cancellations, and refunds. We handle sensitive customer data and payment information..."
+                    rows={4}
+                    className="w-full px-4 py-3 bg-background border border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors resize-none"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">
+                    This description will be used to generate AI-powered test scenarios specific to your use case.
+                  </p>
                 </div>
 
                 {/* Business Type */}

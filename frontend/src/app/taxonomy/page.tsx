@@ -147,18 +147,26 @@ export default function TaxonomyPage() {
                 <Link href="/dashboard" className="text-gray-400 hover:text-purple-400 transition-colors">
                   Dashboard
                 </Link>
+                <Link href="/safety-story" className="text-gray-400 hover:text-purple-400 transition-colors">
+                  Safety Story
+                </Link>
+                <Link href="/taxonomy" className="text-purple-400 font-medium">
+                  AI Scenarios
+                </Link>
                 <Link href="/evaluations/run" className="text-gray-400 hover:text-purple-400 transition-colors">
                   Run Evaluation
                 </Link>
-                <Link href="/taxonomy" className="text-purple-400 font-medium">
-                  Taxonomy
+                <Link href="/generated-scenarios" className="text-gray-400 hover:text-purple-400 transition-colors">
+                  Generate Scenarios
                 </Link>
               </nav>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-400">{currentOrganization.name}</span>
-              <div className="w-2 h-2 rounded-full bg-green-500" />
-            </div>
+            {currentOrganization && (
+              <div className="flex items-center gap-3 px-4 py-2 bg-background/50 border border-purple-500/30 rounded-lg">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <span className="text-sm font-medium text-white">{currentOrganization.name}</span>
+              </div>
+            )}
           </div>
         </div>
       </header>

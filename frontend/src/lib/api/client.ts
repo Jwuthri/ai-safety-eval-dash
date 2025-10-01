@@ -138,4 +138,42 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/safeguards/for-incident/${incidentId}`);
     return handleResponse(response);
   },
+
+  // Generated Scenarios
+  async generateScenarios(data: { organization_id: string; count?: number }): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/generated-scenarios/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  async getGeneratedScenarios(organizationId: string, limit = 100, offset = 0): Promise<any[]> {
+    const response = await fetch(
+      `${API_BASE_URL}/generated-scenarios/organization/${organizationId}?limit=${limit}&offset=${offset}`
+    );
+    return handleResponse(response);
+  },
+
+  async getGeneratedScenariosCount(organizationId: string): Promise<{ count: number }> {
+    const response = await fetch(
+      `${API_BASE_URL}/generated-scenarios/organization/${organizationId}/count`
+    );
+    return handleResponse(response);
+  },
+
+  async deleteGeneratedScenarios(organizationId: string): Promise<any> {
+    const response = await fetch(
+      `${API_BASE_URL}/generated-scenarios/organization/${organizationId}`,
+      { method: 'DELETE' }
+    );
+    return handleResponse(response);
+  },
+
+  // Get single incident by ID
+  async getIncident(incidentId: string): Promise<any> {
+    const response = await fetch(`${API_BASE_URL}/incidents/${incidentId}`);
+    return handleResponse(response);
+  },
 };

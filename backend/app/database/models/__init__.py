@@ -15,6 +15,7 @@ from .business_type import BusinessType
 from .ai_incident import AIIncident
 from .safeguard import Safeguard, IncidentSafeguardMapping
 from .scenario import Scenario
+from .generated_scenario import GeneratedScenario
 from .evaluation_round import EvaluationRound, EvaluationRoundStatus
 from .evaluation_result import EvaluationResult
 from .human_review import HumanReview
@@ -39,6 +40,7 @@ __all__ = [
     "Safeguard",
     "IncidentSafeguardMapping",
     "Scenario",
+    "GeneratedScenario",
     "EvaluationRound",
     "EvaluationResult",
     "HumanReview",

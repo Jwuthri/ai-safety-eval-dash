@@ -1,0 +1,325 @@
+/* Match the main dashboard theme - dark brown/grey with purple accents */
+.container {
+  min-height: calc(100vh - 73px); /* Account for header height */
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  width: 100%;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(to right, #a855f7, #6366f1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #9ca3af;
+}
+
+.error-banner {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.controls {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  padding: 1.5rem;
+  background: rgba(51, 51, 51, 0.5);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 1rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 200px;
+}
+
+.control-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #d1d5db;
+}
+
+.control-group select,
+.control-group input {
+  padding: 0.75rem 1rem;
+  background: rgba(26, 26, 26, 0.8);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 0.75rem;
+  color: #ffffff;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.control-group select:focus,
+.control-group input:focus {
+  outline: none;
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+}
+
+.button-group {
+  display: flex;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+.btn-primary,
+.btn-danger {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: linear-gradient(to right, #9333ea, #6366f1);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(to right, #a855f7, #7c3aed);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  background: #4b5563;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.org-info {
+  padding: 1rem;
+  background: rgba(51, 51, 51, 0.5);
+  border-left: 3px solid #a855f7;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #e5e7eb;
+}
+
+.scenario-count {
+  color: #a855f7;
+  font-weight: 600;
+}
+
+.loading,
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #9ca3af;
+}
+
+.empty-state p {
+  margin: 0.5rem 0;
+  color: #9ca3af;
+}
+
+.table-container {
+  overflow-x: auto;
+  border-radius: 1rem;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  background: rgba(51, 51, 51, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.scenarios-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.scenarios-table thead {
+  background: rgba(168, 85, 247, 0.1);
+  border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.scenarios-table th {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #d1d5db;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.scenarios-table td {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(168, 85, 247, 0.1);
+  font-size: 0.875rem;
+  color: #e5e7eb;
+  vertical-align: top;
+}
+
+.scenarios-table tbody tr {
+  transition: background 0.2s;
+}
+
+.scenarios-table tbody tr:hover {
+  background: rgba(168, 85, 247, 0.05);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.category-badge {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.tactic-badge {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  margin-right: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.tactics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.prompt-cell,
+.behavior-cell {
+  max-width: 350px;
+}
+
+.prompt-text,
+.behavior-text {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #d1d5db;
+}
+
+.sub-category,
+.use-case {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+.created-date {
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.generating-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.generating-spinner {
+  background: rgba(51, 51, 51, 0.95);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  padding: 2.5rem;
+  border-radius: 1rem;
+  text-align: center;
+  max-width: 400px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 1.5rem;
+  border: 4px solid rgba(168, 85, 247, 0.2);
+  border-top-color: #a855f7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.generating-spinner p {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  margin: 0.5rem 0;
+}
+
+.generating-hint {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  margin-top: 0.5rem;
+}
+
+/* Incident Reference Styling */
+.incident-ref {
+  max-width: 150px;
+}
+
+.incident-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #a855f7;
+  text-decoration: none;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(139, 92, 246, 0.1);
+  transition: all 0.2s ease;
+}
+
+.incident-link:hover {
+  background: rgba(139, 92, 246, 0.2);
+  transform: translateX(2px);
+}
