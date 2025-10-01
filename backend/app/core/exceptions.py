@@ -64,6 +64,11 @@ class ErrorContext(BaseModel):
     stack_trace: Optional[List[str]] = None
     additional_data: Dict[str, Any] = {}
 
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat()
+        }
+
 
 class BaseAppException(Exception):
     """
@@ -159,6 +164,11 @@ class BaseAppException(Exception):
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert exception to dictionary."""
+        context_dict = self.context.dict(exclude={"stack_trace"})
+        # Manually serialize datetime to avoid JSON serialization issues
+        if "timestamp" in context_dict and isinstance(context_dict["timestamp"], datetime):
+            context_dict["timestamp"] = context_dict["timestamp"].isoformat()
+        
         return {
             "error_id": self.context.error_id,
             "error_code": self.error_code,
@@ -168,7 +178,7 @@ class BaseAppException(Exception):
             "status_code": self.status_code,
             "retryable": self.retryable,
             "details": [detail.dict() for detail in self.details],
-            "context": self.context.dict(exclude={"stack_trace"}),  # Exclude stack trace from public output
+            "context": context_dict,
             "timestamp": self.context.timestamp.isoformat()
         }
 

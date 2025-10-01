@@ -18,6 +18,12 @@ install_rich_traceback(show_locals=True)
 # Global logger instance
 _logger: Optional[logging.Logger] = None
 
+# Silence SQLAlchemy IMMEDIATELY before anything else happens
+logging.getLogger("sqlalchemy.engine").setLevel(logging.ERROR)
+logging.getLogger("sqlalchemy.pool").setLevel(logging.ERROR)
+logging.getLogger("sqlalchemy.dialects").setLevel(logging.ERROR)
+logging.getLogger("sqlalchemy.orm").setLevel(logging.ERROR)
+
 
 def setup_logging(log_level: str = "INFO", environment: str = "development"):
     """Simple Rich logging setup."""
@@ -31,8 +37,8 @@ def setup_logging(log_level: str = "INFO", environment: str = "development"):
         datefmt="<%d %b %Y | %H:%M:%S>",
         handlers=[
             RichHandler(
-                rich_tracebacks=True,
-                tracebacks_show_locals=True,
+                # rich_tracebacks=True,
+                tracebacks_show_locals=False,
                 show_time=True,
                 show_level=True,
                 show_path=True,
@@ -48,6 +54,13 @@ def setup_logging(log_level: str = "INFO", environment: str = "development"):
         logger.handlers.clear()
         logger.propagate = True
 
+    # Silence SQLAlchemy's chatty logs - only show errors
+    for logger_name in ["sqlalchemy.engine", "sqlalchemy.pool", "sqlalchemy.dialects", "sqlalchemy.orm"]:
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(logging.ERROR)
+        logger.handlers.clear()
+        logger.propagate = True
+
     # Set global logger
     _logger = logging.getLogger("app")
 
@@ -56,8 +69,8 @@ def setup_cli_logging(level: str = "INFO", verbose: bool = False):
     """Simple CLI Rich logging setup."""
     global _logger
 
-    if verbose:
-        level = "DEBUG"
+    # if verbose:
+    #     level = "DEBUG"
 
     # Just use Rich for CLI too - keep it simple!
     FORMAT = "%(message)s"
@@ -68,7 +81,7 @@ def setup_cli_logging(level: str = "INFO", verbose: bool = False):
         handlers=[
             RichHandler(
                 rich_tracebacks=True,
-                tracebacks_show_locals=verbose,
+                tracebacks_show_locals=False,
                 show_time=False,
                 show_level=True,
                 show_path=verbose,

@@ -1,169 +1,175 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect } from 'react'
-import { SignInButton, UserButton, useUser } from '@clerk/nextjs'
-import { motion } from 'framer-motion'
-import { MessageCircle, Code, Zap } from 'lucide-react'
-import Link from 'next/link'
+import Link from "next/link";
+import { useOrganization } from '@/contexts/OrganizationContext';
+import InteractiveTerminal from '@/components/InteractiveTerminal';
 
-export default function HomePage() {
-  const { isSignedIn, user } = useUser()
-  const [email, setEmail] = useState('')
+export default function Home() {
+  const { loading } = useOrganization();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-blue-950 to-purple-950">
-      {/* Navigation */}
-      <nav className="flex items-center justify-between px-6 py-4">
-        <div className="text-white font-bold tracking-wider">
-          AI Agent App
-        </div>
-        <div>
-          {isSignedIn ? (
-            <UserButton afterSignOutUrl="/" />
-          ) : (
-            <SignInButton mode="modal">
-              <button className="text-white/80 hover:text-white transition-colors">
-                Sign In
-              </button>
-            </SignInButton>
-          )}
-        </div>
-      </nav>
+    <main className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-hero-gradient pt-20 pb-12">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.1),transparent_50%)]" />
+        
+        <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
+          {/* Logo/Brand */}
+          <div className="text-center mb-8">
+            <h1 className="text-sm font-semibold tracking-[0.3em] text-gray-400 uppercase">
+              AIUC-1 Certified Platform
+            </h1>
+          </div>
 
-      <div className="container mx-auto px-6 py-16">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-6xl md:text-7xl font-bold bg-gradient-to-r from-purple-400 via-pink-500 to-blue-500 bg-clip-text text-transparent mb-6"
-          >
-            AI-Powered Chat
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-xl text-white/80 mb-8 max-w-2xl mx-auto"
-          >
-            Chat with advanced AI. Get instant, intelligent responses to any question.
-          </motion.p>
-
-          {/* Terminal Demo */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="max-w-3xl mx-auto mb-12"
-          >
-            <div className="bg-gray-900/50 rounded-lg border border-gray-700/50 p-6 text-left">
-              <div className="flex items-center mb-4">
-                <div className="flex space-x-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                </div>
-                <div className="ml-4 text-white/60 text-sm font-mono">ai-chat-terminal</div>
-              </div>
-              <div className="font-mono text-sm space-y-2">
-                <div className="text-green-400">$ What's the best approach for learning machine learning? ✦</div>
-                <div className="text-blue-400">Analyzing query... Generating comprehensive response...</div>
-                <div className="text-yellow-400">💬 Response ready! Here's a detailed learning path for you. ■</div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Email Signup */}
-          {!isSignedIn && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="mb-16"
-            >
-              <h2 className="text-2xl font-bold text-white mb-4">Get Started</h2>
-              <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-                  className="flex-1 px-4 py-3 bg-gray-800/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
-                />
-                <SignInButton mode="modal">
-                  <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105">
-                    Start Chatting →
-                  </button>
-                </SignInButton>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Action Button for Signed In Users */}
-          {isSignedIn && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="mb-16"
-            >
-              <Link href="/chat">
-                <button className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-200 hover:scale-105 text-lg">
-                  Start Chatting →
-                </button>
-              </Link>
-            </motion.div>
-          )}
-        </div>
-
-        {/* Features */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
-          className="grid md:grid-cols-3 gap-8"
-        >
-          {/* Intelligent Conversations */}
-          <div className="text-center p-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <MessageCircle className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-4">Smart Conversations</h3>
-            <p className="text-white/70 leading-relaxed">
-              Engage in natural, intelligent conversations with advanced AI technology
+          {/* Main Headline */}
+          <div className="text-center">
+            <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6">
+              <span className="bg-gradient-to-r from-purple-400 via-violet-400 to-purple-600 bg-clip-text text-transparent">
+                Prevent the Next
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-purple-400 via-violet-400 to-purple-600 bg-clip-text text-transparent">
+                AirCanada Disaster
+              </span>
+            </h1>
+            
+            <p className="mt-6 text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              Multi-round AI safety evaluation platform. Test, improve, and certify your AI agents 
+              before they reach production.
             </p>
           </div>
 
-          {/* Instant Responses */}
-          <div className="text-center p-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Zap className="w-8 h-8 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-4">Lightning Fast</h3>
-            <p className="text-white/70 leading-relaxed">
-              Get instant responses with real-time processing and optimized performance
-            </p>
-          </div>
+          {/* Interactive Terminal */}
+          <InteractiveTerminal />
 
-          {/* Always Available */}
-          <div className="text-center p-6">
-            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Code className="w-8 h-8 text-white" />
+          {/* Trust Badges */}
+          <div className="mt-16 flex flex-wrap justify-center items-center gap-8 text-sm text-gray-400">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500" />
+              <span>AIUC-1 Certified</span>
             </div>
-            <h3 className="text-2xl font-bold text-white mb-4">Always Available</h3>
-            <p className="text-white/70 leading-relaxed">
-              24/7 availability with persistent conversations and session history
-            </p>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-purple-500" />
+              <span>10,000+ Evaluations</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <span>Fortune 1000 Trusted</span>
+            </div>
           </div>
-        </motion.div>
-      </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-12 bg-background">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="group relative p-8 rounded-2xl bg-card/30 backdrop-blur-sm border border-purple-500/10 hover:border-purple-500/30 transition-all duration-300">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-6 group-hover:bg-purple-500/20 transition-colors">
+                <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">Multi-Turn Testing</h3>
+              <p className="text-gray-400 leading-relaxed">
+                Comprehensive conversational red-teaming with 3 parallel LLM judges for diverse evaluation perspectives.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="group relative p-8 rounded-2xl bg-card/30 backdrop-blur-sm border border-purple-500/10 hover:border-purple-500/30 transition-all duration-300">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-6 group-hover:bg-purple-500/20 transition-colors">
+                <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">Real Incidents</h3>
+              <p className="text-gray-400 leading-relaxed">
+                Tests grounded in real-world failures like AirCanada. Map incidents to preventive measures and comprehensive testing.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="group relative p-8 rounded-2xl bg-card/30 backdrop-blur-sm border border-purple-500/10 hover:border-purple-500/30 transition-all duration-300">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-6 group-hover:bg-purple-500/20 transition-colors">
+                <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">Track Progress</h3>
+              <p className="text-gray-400 leading-relaxed">
+                Visual dashboards show improvement trajectory across rounds. From 77.9% to 100% pass rate with AIUC-1 certification.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-20 bg-card/20">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="text-center">
+              <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-violet-600 bg-clip-text text-transparent mb-2">
+                10K+
+              </div>
+              <div className="text-gray-400">Evaluations Run</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-violet-600 bg-clip-text text-transparent mb-2">
+                97.4%
+              </div>
+              <div className="text-gray-400">Peak Pass Rate</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-violet-600 bg-clip-text text-transparent mb-2">
+                50+
+              </div>
+              <div className="text-gray-400">Incident Types</div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-purple-400 to-violet-600 bg-clip-text text-transparent mb-2">
+                3
+              </div>
+              <div className="text-gray-400">LLM Judges</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Footer */}
-      <footer className="text-center py-8 text-white/40 text-sm">
-        © 2025 Ai Agent App. All rights reserved.
+      <footer className="border-t border-purple-500/10 py-12 bg-background">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="text-gray-400 text-sm">
+              © 2025 AI Safety Evaluation Dashboard. Built for enterprise trust.
+            </div>
+            <div className="flex gap-6">
+              <Link href="/safety-story" className="text-gray-400 hover:text-purple-400 transition-colors text-sm">
+                Safety Story
+              </Link>
+              <Link href="/docs" className="text-gray-400 hover:text-purple-400 transition-colors text-sm">
+                Documentation
+              </Link>
+              <Link href="/certification" className="text-gray-400 hover:text-purple-400 transition-colors text-sm">
+                AIUC-1
+              </Link>
+            </div>
+          </div>
+        </div>
       </footer>
-    </div>
-  )
+    </main>
+  );
 }

@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
 
 export interface ChatRequest {
   message: string
@@ -93,28 +93,28 @@ class ApiClient {
   }
 
   async sendMessage(request: ChatRequest): Promise<ChatResponse> {
-    return this.request<ChatResponse>('/api/v1/chat/', {
+    return this.request<ChatResponse>('/chat/', {
       method: 'POST',
       body: JSON.stringify(request),
     })
   }
 
   async getSession(sessionId: string): Promise<ChatSession> {
-    return this.request<ChatSession>(`/api/v1/chat/sessions/${sessionId}`)
+    return this.request<ChatSession>(`/chat/sessions/${sessionId}`)
   }
 
   async listSessions(): Promise<{ sessions: Array<{ session_id: string; message_count: number; last_activity: string | null }> }> {
-    return this.request<{ sessions: Array<{ session_id: string; message_count: number; last_activity: string | null }> }>('/api/v1/chat/sessions')
+    return this.request<{ sessions: Array<{ session_id: string; message_count: number; last_activity: string | null }> }>('/chat/sessions')
   }
 
   async deleteSession(sessionId: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/api/v1/chat/sessions/${sessionId}`, {
+    return this.request<{ message: string }>(`/chat/sessions/${sessionId}`, {
       method: 'DELETE',
     })
   }
 
   async healthCheck(): Promise<HealthResponse> {
-    return this.request<HealthResponse>('/api/v1/health/')
+    return this.request<HealthResponse>('/health/')
   }
 
   async getRoot(): Promise<{
@@ -123,6 +123,7 @@ class ApiClient {
     docs: string
     health: string
   }> {
+    const baseWithoutVersion = this.baseUrl.replace('/api/v1', '');
     return this.request<{
       message: string
       version: string

@@ -9,6 +9,17 @@ from .completion import *
 from .task import *
 from .user import *
 
+# Evaluation models (split by domain)
+from .enums import *
+from .business_type import *
+from .organization import *
+from .scenario import *
+from .evaluation_round import *
+from .evaluation_result import *
+from .human_review import *
+from .certification import *
+from .scenario_conversation import *
+
 __all__ = [
     # Chat models
     "ChatMessage",
@@ -30,7 +41,6 @@ __all__ = [
     "LoginResponse",
     "UserStats",
     "UserListResponse",
-    # Note: API Key and advanced Task models available but not currently used in endpoints
     # Base models
     "HealthResponse",
     "ErrorResponse",
@@ -38,5 +48,43 @@ __all__ = [
     "SuccessResponse",
     "StatusResponse",
     "APIInfo",
-    "PaginatedResponse"
+    "PaginatedResponse",
+    # Evaluation enums
+    "EvaluationRoundStatusEnum",
+    "ReviewStatusEnum",
+    "CertificationStatusEnum",
+    "SeverityGrade",
+    # Business type models
+    "BusinessTypeBase",
+    "BusinessTypeCreate",
+    "BusinessTypeResponse",
+    # Organization models
+    "OrganizationBase",
+    "OrganizationCreate",
+    "OrganizationUpdate",
+    "OrganizationResponse",
+    # Scenario models
+    "ScenarioBase",
+    "ScenarioCreate",
+    "ScenarioResponse",
+    # Evaluation round models
+    "EvaluationRoundCreate",
+    "EvaluationRoundResponse",
+    "RoundSummary",
+    # Evaluation result models
+    "JudgeResponse",
+    "EvaluationResultCreate",
+    "EvaluationResultResponse",
+    # Human review models
+    "HumanReviewCreate",
+    "HumanReviewResponse",
+    # Certification models
+    "CertificationCheck",
+    "CertificationCreate",
+    "CertificationIssue",
+    "CertificationResponse",
+    # Scenario conversation models
+    "ScenarioConversationBase",
+    "ScenarioConversationCreate",
+    "ScenarioConversation",
 ]

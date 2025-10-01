@@ -28,12 +28,15 @@ from app.models.base import APIInfo
 from fastapi import FastAPI
 
 
-from .utils.logging import get_logger
-
-logger = get_logger("main")
+from .utils.logging import get_logger, setup_logging
 
 # Get settings
 settings = get_settings()
+
+# Setup logging FIRST before anything else
+setup_logging(settings.log_level, settings.environment)
+
+logger = get_logger("main")
 
 
 @asynccontextmanager
@@ -120,7 +123,7 @@ async def root() -> APIInfo:
 @app.get("/health")
 async def health_redirect():
     """Legacy health endpoint - redirects to v1."""
-    from fastapi import RedirectResponse
+    from starlette.responses import RedirectResponse
     return RedirectResponse(url="/api/v1/health")
 
 if __name__ == "__main__":
@@ -129,6 +132,6 @@ if __name__ == "__main__":
         host=settings.host,
         port=settings.port,
         reload=settings.reload,
-        log_level=settings.log_level.lower(),
+        log_config=None,  # Use our Rich logging config instead
         workers=1 if settings.reload else settings.workers
     )

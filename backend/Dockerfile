@@ -22,10 +22,10 @@ RUN apt-get update && apt-get install -y \
 
 # Install uv (fast Python package manager)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:$PATH"
+ENV PATH="/root/.local/bin:$PATH"
 
 # Copy dependency files first (better Docker layer caching)
-COPY pyproject.toml uv.lock* ./
+COPY pyproject.toml uv.lock* README.md* ./
 
 # Create virtual environment and install dependencies
 RUN uv venv .venv
