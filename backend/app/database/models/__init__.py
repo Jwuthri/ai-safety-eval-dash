@@ -13,6 +13,7 @@ from .user import User, UserStatusEnum
 from .organization import Organization
 from .business_type import BusinessType
 from .ai_incident import AIIncident
+from .safeguard import Safeguard, IncidentSafeguardMapping
 from .scenario import Scenario
 from .evaluation_round import EvaluationRound, EvaluationRoundStatus
 from .evaluation_result import EvaluationResult
@@ -35,6 +36,8 @@ __all__ = [
     "Organization",
     "BusinessType",
     "AIIncident",
+    "Safeguard",
+    "IncidentSafeguardMapping",
     "Scenario",
     "EvaluationRound",
     "EvaluationResult",
