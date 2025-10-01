@@ -157,11 +157,11 @@ export default function Home() {
               © 2025 AI Safety Evaluation Dashboard. Built for enterprise trust.
             </div>
             <div className="flex gap-6">
+              <Link href="/safety-story" className="text-gray-400 hover:text-purple-400 transition-colors text-sm">
+                Safety Story
+              </Link>
               <Link href="/docs" className="text-gray-400 hover:text-purple-400 transition-colors text-sm">
                 Documentation
-              </Link>
-              <Link href="/api" className="text-gray-400 hover:text-purple-400 transition-colors text-sm">
-                API
               </Link>
               <Link href="/certification" className="text-gray-400 hover:text-purple-400 transition-colors text-sm">
                 AIUC-1

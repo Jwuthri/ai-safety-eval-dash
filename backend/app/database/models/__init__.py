@@ -12,6 +12,7 @@ from .user import User, UserStatusEnum
 # AI Safety Evaluation Dashboard models
 from .organization import Organization
 from .business_type import BusinessType
+from .ai_incident import AIIncident
 from .scenario import Scenario
 from .evaluation_round import EvaluationRound, EvaluationRoundStatus
 from .evaluation_result import EvaluationResult
@@ -33,6 +34,7 @@ __all__ = [
     # AI Safety Evaluation Dashboard Models
     "Organization",
     "BusinessType",
+    "AIIncident",
     "Scenario",
     "EvaluationRound",
     "EvaluationResult",

@@ -286,6 +286,9 @@ export default function DashboardPage() {
                 <Link href="/dashboard" className="text-purple-400 font-medium">
                   Dashboard
                 </Link>
+                <Link href="/safety-story" className="text-gray-400 hover:text-purple-400 transition-colors">
+                  Safety Story
+                </Link>
                 <Link href="/evaluations/run" className="text-gray-400 hover:text-purple-400 transition-colors">
                   Run Evaluation
                 </Link>

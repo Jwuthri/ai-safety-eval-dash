@@ -3,6 +3,7 @@ Database repositories package for ai-safety-eval-dash.
 """
 
 from .agent_iteration import AgentIterationRepository
+from .ai_incident_repository import AIIncidentRepository
 from .aiuc_certification import AiucCertificationRepository
 from .api_key import ApiKeyRepository
 from .business_type import BusinessTypeRepository
@@ -31,6 +32,7 @@ __all__ = [
 
     # AI Safety Evaluation Repositories
     "BusinessTypeRepository",
+    "AIIncidentRepository",
     "OrganizationRepository",
     "ScenarioRepository",
     "EvaluationRoundRepository",

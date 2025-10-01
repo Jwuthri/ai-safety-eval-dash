@@ -13,6 +13,7 @@ from app.api.v1 import (
     evaluations,
     organizations,
     business_types,
+    ai_incidents,
     scenarios,
     certifications,
     comparisons,
@@ -34,6 +35,7 @@ api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics", "m
 api_router.include_router(evaluations.router)
 api_router.include_router(organizations.router)
 api_router.include_router(business_types.router)
+api_router.include_router(ai_incidents.router)
 api_router.include_router(scenarios.router)
 api_router.include_router(certifications.router)
 api_router.include_router(comparisons.router)
