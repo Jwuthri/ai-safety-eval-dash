@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import IncidentCard from '@/components/safety/IncidentCard';
 import { SafeguardCard } from '@/components/safety/SafeguardCard';
+import { api } from '@/lib/api/client';
 import type { AIIncident } from '@/types/safety';
 
 interface Safeguard {
@@ -41,17 +42,13 @@ export default function SafetyStoryPage() {
 
   async function loadIncidents() {
     try {
-      const params = new URLSearchParams();
+      const params: Record<string, string> = { limit: '20' };
       if (currentOrganization?.business_type_id) {
-        params.set('business_type_id', currentOrganization.business_type_id);
+        params.business_type_id = currentOrganization.business_type_id;
       }
-      params.set('limit', '20');
       
-      const response = await fetch(`http://localhost:8000/api/v1/incidents?${params}`);
-      if (response.ok) {
-        const data = await response.json();
-        setIncidents(data);
-      }
+      const data = await api.getIncidents(params);
+      setIncidents(data);
     } catch (error) {
       console.error('Failed to load incidents:', error);
     } finally {
@@ -61,24 +58,20 @@ export default function SafetyStoryPage() {
 
   async function loadIncidentStats() {
     try {
-      const params = new URLSearchParams();
+      const params: Record<string, string> = {};
       if (currentOrganization?.business_type_id) {
-        params.set('business_type_id', currentOrganization.business_type_id);
+        params.business_type_id = currentOrganization.business_type_id;
       }
       
-      const [severityRes, harmTypeRes] = await Promise.all([
-        fetch(`http://localhost:8000/api/v1/incidents/stats/severity?${params}`),
-        fetch(`http://localhost:8000/api/v1/incidents/stats/harm-types?${params}`)
+      const [severityData, harmTypeData] = await Promise.all([
+        api.getIncidentStatsSeverity(params),
+        api.getIncidentStatsHarmTypes(params)
       ]);
       
-      if (severityRes.ok && harmTypeRes.ok) {
-        const severityData = await severityRes.json();
-        const harmTypeData = await harmTypeRes.json();
-        setIncidentStats({
-          severity: severityData,
-          harmTypes: harmTypeData,
-        });
-      }
+      setIncidentStats({
+        severity: severityData,
+        harmTypes: harmTypeData,
+      });
     } catch (error) {
       console.error('Failed to load incident stats:', error);
     }
@@ -87,11 +80,8 @@ export default function SafetyStoryPage() {
   async function loadSafeguardsForIncident(incidentId: string) {
     setLoadingSafeguards(true);
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/safeguards/for-incident/${incidentId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setSafeguards(data);
-      }
+      const data = await api.getSafeguardsForIncident(parseInt(incidentId));
+      setSafeguards(data);
     } catch (error) {
       console.error('Failed to load safeguards:', error);
       setSafeguards([]);

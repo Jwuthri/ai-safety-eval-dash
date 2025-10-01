@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { api } from '@/lib/api/client';
 
 interface Organization {
   id: string;
@@ -28,11 +29,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
   async function loadOrganizations() {
     try {
-      const response = await fetch('http://localhost:8000/api/v1/organizations/');
-      if (!response.ok) {
-        throw new Error(`Failed to fetch organizations: ${response.status}`);
-      }
-      const orgs = await response.json();
+      const orgs = await api.getOrganizations();
       setOrganizations(orgs);
       
       // Auto-select first org if none selected

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { api } from '@/lib/api/client';
 
 interface TaxonomyNode {
   name: string;
@@ -35,8 +36,7 @@ export default function TaxonomyPage() {
     
     try {
       // Fetch scenarios and build taxonomy tree
-      const response = await fetch(`http://localhost:8000/api/v1/scenarios?business_type_id=${currentOrganization.business_type_id}`);
-      const scenarios = await response.json();
+      const scenarios = await api.getScenarios(parseInt(currentOrganization.business_type_id));
 
       // Build hierarchical structure
       const tree: Record<string, TaxonomyNode> = {};

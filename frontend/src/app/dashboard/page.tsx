@@ -128,12 +128,7 @@ export default function DashboardPage() {
 
   async function loadBusinessTypes() {
     try {
-      const typesResponse = await fetch('http://localhost:8000/api/v1/business-types/');
-      if (!typesResponse.ok) {
-        throw new Error(`Failed to fetch business types: ${typesResponse.status}`);
-      }
-      
-      const types = await typesResponse.json();
+      const types = await api.getBusinessTypes();
       console.log('✅ Loaded business types:', types.length);
       setBusinessTypes(types);
     } catch (error) {
@@ -155,11 +150,8 @@ export default function DashboardPage() {
         setAllRoundsStats(allStats as any);
         
         // Load comparison data for category breakdown
-        const compRes = await fetch(`http://localhost:8000/api/v1/comparisons/organizations/${selectedOrg}/rounds-comparison`);
-        if (compRes.ok) {
-          const compData = await compRes.json();
-          setComparisonData(compData);
-        }
+        const compData = await api.getRoundsComparison(selectedOrg);
+        setComparisonData(compData);
       }
     } catch (error) {
       console.error('Failed to load rounds:', error);
@@ -175,26 +167,13 @@ export default function DashboardPage() {
     setCreatingOrg(true);
     
     try {
-      const response = await fetch('http://localhost:8000/api/v1/organizations/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: newOrgName,
-          slug: newOrgSlug,
-          business_type_id: newOrgBusinessType,
-          contact_email: newOrgContactEmail || null,
-          contact_name: newOrgContactName || null,
-        }),
+      const newOrg = await api.createOrganization({
+        name: newOrgName,
+        slug: newOrgSlug,
+        business_type_id: newOrgBusinessType,
+        contact_email: newOrgContactEmail || null,
+        contact_name: newOrgContactName || null,
       });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to create organization');
-      }
-      
-      const newOrg = await response.json();
       
       // Reload organizations
       await refreshOrganizations();
@@ -233,18 +212,9 @@ export default function DashboardPage() {
     
     try {
       // Check eligibility for the selected round
-      const eligibilityUrl = `http://localhost:8000/api/v1/certifications/organizations/${selectedOrg}/eligibility?evaluation_round_id=${selectedRound}`;
-      console.log('Checking eligibility at:', eligibilityUrl);
+      console.log('Checking eligibility for org:', selectedOrg, 'round:', selectedRound);
       
-      const eligibilityResponse = await fetch(eligibilityUrl);
-      
-      if (!eligibilityResponse.ok) {
-        const errorText = await eligibilityResponse.text();
-        console.error('Eligibility check failed:', errorText);
-        throw new Error(`Failed to check eligibility: ${eligibilityResponse.status}`);
-      }
-      
-      const eligibility = await eligibilityResponse.json();
+      const eligibility = await api.getCertificationEligibility(selectedOrg, selectedRound);
       console.log('Eligibility result:', eligibility);
       
       setEligibilityResult(eligibility);

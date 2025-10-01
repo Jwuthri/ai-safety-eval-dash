@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { api } from '@/lib/api/client';
 
 interface EvaluationResult {
   id: string;
@@ -57,14 +58,13 @@ export default function EvaluationResultsPage() {
 
   async function loadResults() {
     try {
-      // Get round info
-      const roundResponse = await fetch(`http://localhost:8000/api/v1/evaluations/rounds/${roundId}`);
-      const round = await roundResponse.json();
+      // Get round info and results
+      const [round, resultsData] = await Promise.all([
+        api.getEvaluationRound(roundId),
+        api.getRoundResults(roundId, 1000)
+      ]);
+      
       setRoundInfo(round);
-
-      // Get all results
-      const resultsResponse = await fetch(`http://localhost:8000/api/v1/evaluations/rounds/${roundId}/results?limit=1000`);
-      const resultsData = await resultsResponse.json();
       setResults(resultsData);
     } catch (error) {
       console.error('Failed to load results:', error);

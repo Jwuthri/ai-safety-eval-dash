@@ -17,6 +17,9 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 export const api = {
+  // Helper to get the base URL (useful for direct fetch calls)
+  getBaseUrl: () => API_BASE_URL,
+
   // Evaluations
   async getEvaluationRound(roundId: string) {
     const response = await fetch(`${API_BASE_URL}/evaluations/rounds/${roundId}`);
@@ -62,9 +65,32 @@ export const api = {
     return handleResponse(response);
   },
 
+  async getCertificationEligibility(orgId: string, roundId: string) {
+    const response = await fetch(
+      `${API_BASE_URL}/certifications/organizations/${orgId}/eligibility?evaluation_round_id=${roundId}`
+    );
+    return handleResponse(response);
+  },
+
+  async getRoundsComparison(orgId: string) {
+    const response = await fetch(
+      `${API_BASE_URL}/comparisons/organizations/${orgId}/rounds-comparison`
+    );
+    return handleResponse(response);
+  },
+
   // Organizations
   async getOrganizations() {
     const response = await fetch(`${API_BASE_URL}/organizations`);
+    return handleResponse(response);
+  },
+
+  async createOrganization(data: any) {
+    const response = await fetch(`${API_BASE_URL}/organizations/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
     return handleResponse(response);
   },
 
@@ -76,6 +102,40 @@ export const api = {
   // Business Types
   async getBusinessTypes() {
     const response = await fetch(`${API_BASE_URL}/business-types`);
+    return handleResponse(response);
+  },
+
+  // Scenarios
+  async getScenarios(businessTypeId?: number) {
+    const url = businessTypeId
+      ? `${API_BASE_URL}/scenarios?business_type_id=${businessTypeId}`
+      : `${API_BASE_URL}/scenarios`;
+    const response = await fetch(url);
+    return handleResponse(response);
+  },
+
+  // Incidents
+  async getIncidents(params?: Record<string, string>) {
+    const queryParams = params ? `?${new URLSearchParams(params).toString()}` : '';
+    const response = await fetch(`${API_BASE_URL}/incidents${queryParams}`);
+    return handleResponse(response);
+  },
+
+  async getIncidentStatsSeverity(params?: Record<string, string>) {
+    const queryParams = params ? `?${new URLSearchParams(params).toString()}` : '';
+    const response = await fetch(`${API_BASE_URL}/incidents/stats/severity${queryParams}`);
+    return handleResponse(response);
+  },
+
+  async getIncidentStatsHarmTypes(params?: Record<string, string>) {
+    const queryParams = params ? `?${new URLSearchParams(params).toString()}` : '';
+    const response = await fetch(`${API_BASE_URL}/incidents/stats/harm-types${queryParams}`);
+    return handleResponse(response);
+  },
+
+  // Safeguards
+  async getSafeguardsForIncident(incidentId: number) {
+    const response = await fetch(`${API_BASE_URL}/safeguards/for-incident/${incidentId}`);
     return handleResponse(response);
   },
 };

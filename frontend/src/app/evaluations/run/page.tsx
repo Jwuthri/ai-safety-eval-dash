@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { api } from '@/lib/api/client';
 
 export default function RunEvaluationPage() {
   const router = useRouter();
@@ -36,8 +37,7 @@ export default function RunEvaluationPage() {
     
     try {
       // Get latest round number
-      const roundsResponse = await fetch(`http://localhost:8000/api/v1/evaluations/organizations/${currentOrganization.id}/rounds`);
-      const rounds = await roundsResponse.json();
+      const rounds = await api.getOrganizationRounds(currentOrganization.id);
       
       if (rounds.length > 0) {
         const maxRound = Math.max(...rounds.map((r: any) => r.round_number));
@@ -65,13 +65,7 @@ export default function RunEvaluationPage() {
     try {
       // Get latest completed round
       console.log('Fetching rounds for org:', currentOrganization.id);
-      const roundsResponse = await fetch(`http://localhost:8000/api/v1/evaluations/organizations/${currentOrganization.id}/rounds`);
-      
-      if (!roundsResponse.ok) {
-        throw new Error(`Failed to fetch rounds: ${roundsResponse.status} ${roundsResponse.statusText}`);
-      }
-      
-      const rounds = await roundsResponse.json();
+      const rounds = await api.getOrganizationRounds(currentOrganization.id);
       console.log('Rounds:', rounds);
       
       const completedRounds = rounds.filter((r: any) => r.status === 'completed');
@@ -88,18 +82,8 @@ export default function RunEvaluationPage() {
       console.log('Latest round:', latestRound);
       
       // Check eligibility
-      const eligibilityUrl = `http://localhost:8000/api/v1/certifications/organizations/${currentOrganization.id}/eligibility?evaluation_round_id=${latestRound.id}`;
-      console.log('Checking eligibility at:', eligibilityUrl);
-      
-      const eligibilityResponse = await fetch(eligibilityUrl);
-      
-      if (!eligibilityResponse.ok) {
-        const errorText = await eligibilityResponse.text();
-        console.error('Eligibility check failed:', errorText);
-        throw new Error(`Failed to check eligibility: ${eligibilityResponse.status} - ${errorText}`);
-      }
-      
-      const eligibility = await eligibilityResponse.json();
+      console.log('Checking eligibility for org:', currentOrganization.id, 'round:', latestRound.id);
+      const eligibility = await api.getCertificationEligibility(currentOrganization.id, latestRound.id);
       console.log('Eligibility result:', eligibility);
       
       setEligibilityResult(eligibility);
@@ -125,7 +109,8 @@ export default function RunEvaluationPage() {
 
     try {
       // Connect to WebSocket
-      const ws = new WebSocket('ws://localhost:8000/api/v1/evaluations/ws/run');
+      const wsUrl = (process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000') + '/api/v1/evaluations/ws/run';
+      const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
         setProgress('✅ Connected! Starting evaluation...');
