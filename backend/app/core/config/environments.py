@@ -29,6 +29,7 @@ class DevelopmentSettings(Settings):
         "http://localhost:8080",  # Common dev ports
         "http://localhost:5173",  # Vite default
         "http://localhost:4200",  # Angular default
+        "https://ai-safety-eval-dash.vercel.app"
     ]
 
     # Development database
@@ -135,6 +136,7 @@ class StagingSettings(Settings):
     cors_origins: list[str] = [
         "https://staging.ai-safety-eval-dash.com",
         "https://ai-safety-eval-dash-staging.vercel.app",
+        "https://ai-safety-eval-dash.vercel.app"
     ]
 
 
@@ -169,6 +171,7 @@ class ProductionSettings(Settings):
     cors_origins: list[str] = [
         "https://ai-safety-eval-dash.com",
         "https://www.ai-safety-eval-dash.com",
+        "https://ai-safety-eval-dash.vercel.app"
     ]
     allowed_hosts: list[str] = [
         "ai-safety-eval-dash.com",

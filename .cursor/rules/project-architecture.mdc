@@ -20,6 +20,8 @@ Monorepo structure with clear separation:
 - `frontend/` - Next.js dashboard for visualization
 - `docker-compose.yml` - Service orchestration
 
+NEVER OVERWRITE .env files!!
+
 ## Backend Architecture (FastAPI)
 
 ### Core Structure
