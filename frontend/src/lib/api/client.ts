@@ -21,31 +21,31 @@ export const api = {
   getBaseUrl: () => API_BASE_URL,
 
   // Evaluations
-  async getEvaluationRound(roundId: string) {
+  async getEvaluationRound(roundId: string): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/evaluations/rounds/${roundId}`);
     return handleResponse(response);
   },
 
-  async getRoundStatistics(roundId: string) {
+  async getRoundStatistics(roundId: string): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/evaluations/rounds/${roundId}/stats`);
     return handleResponse(response);
   },
 
-  async getRoundResults(roundId: string, limit = 100, offset = 0) {
+  async getRoundResults(roundId: string, limit = 100, offset = 0): Promise<any[]> {
     const response = await fetch(
       `${API_BASE_URL}/evaluations/rounds/${roundId}/results?limit=${limit}&offset=${offset}`
     );
     return handleResponse(response);
   },
 
-  async getOrganizationRounds(orgId: string, limit = 10) {
+  async getOrganizationRounds(orgId: string, limit = 10): Promise<any[]> {
     const response = await fetch(
       `${API_BASE_URL}/evaluations/organizations/${orgId}/rounds?limit=${limit}`
     );
     return handleResponse(response);
   },
 
-  async getLatestRound(orgId: string) {
+  async getLatestRound(orgId: string): Promise<any> {
     const response = await fetch(
       `${API_BASE_URL}/evaluations/organizations/${orgId}/latest-round`
     );
@@ -56,7 +56,7 @@ export const api = {
     organization_id: string;
     round_number: number;
     description?: string;
-  }) {
+  }): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/evaluations/rounds`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -65,14 +65,14 @@ export const api = {
     return handleResponse(response);
   },
 
-  async getCertificationEligibility(orgId: string, roundId: string) {
+  async getCertificationEligibility(orgId: string, roundId: string): Promise<any> {
     const response = await fetch(
       `${API_BASE_URL}/certifications/organizations/${orgId}/eligibility?evaluation_round_id=${roundId}`
     );
     return handleResponse(response);
   },
 
-  async getRoundsComparison(orgId: string) {
+  async getRoundsComparison(orgId: string): Promise<any> {
     const response = await fetch(
       `${API_BASE_URL}/comparisons/organizations/${orgId}/rounds-comparison`
     );
@@ -80,12 +80,12 @@ export const api = {
   },
 
   // Organizations
-  async getOrganizations() {
+  async getOrganizations(): Promise<any[]> {
     const response = await fetch(`${API_BASE_URL}/organizations`);
     return handleResponse(response);
   },
 
-  async createOrganization(data: any) {
+  async createOrganization(data: any): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/organizations/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -94,19 +94,19 @@ export const api = {
     return handleResponse(response);
   },
 
-  async getOrganization(orgId: string) {
+  async getOrganization(orgId: string): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/organizations/${orgId}`);
     return handleResponse(response);
   },
 
   // Business Types
-  async getBusinessTypes() {
+  async getBusinessTypes(): Promise<any[]> {
     const response = await fetch(`${API_BASE_URL}/business-types`);
     return handleResponse(response);
   },
 
   // Scenarios
-  async getScenarios(businessTypeId?: number) {
+  async getScenarios(businessTypeId?: number): Promise<any[]> {
     const url = businessTypeId
       ? `${API_BASE_URL}/scenarios?business_type_id=${businessTypeId}`
       : `${API_BASE_URL}/scenarios`;
@@ -115,26 +115,26 @@ export const api = {
   },
 
   // Incidents
-  async getIncidents(params?: Record<string, string>) {
+  async getIncidents(params?: Record<string, string>): Promise<any[]> {
     const queryParams = params ? `?${new URLSearchParams(params).toString()}` : '';
     const response = await fetch(`${API_BASE_URL}/incidents${queryParams}`);
     return handleResponse(response);
   },
 
-  async getIncidentStatsSeverity(params?: Record<string, string>) {
+  async getIncidentStatsSeverity(params?: Record<string, string>): Promise<any> {
     const queryParams = params ? `?${new URLSearchParams(params).toString()}` : '';
     const response = await fetch(`${API_BASE_URL}/incidents/stats/severity${queryParams}`);
     return handleResponse(response);
   },
 
-  async getIncidentStatsHarmTypes(params?: Record<string, string>) {
+  async getIncidentStatsHarmTypes(params?: Record<string, string>): Promise<any> {
     const queryParams = params ? `?${new URLSearchParams(params).toString()}` : '';
     const response = await fetch(`${API_BASE_URL}/incidents/stats/harm-types${queryParams}`);
     return handleResponse(response);
   },
 
   // Safeguards
-  async getSafeguardsForIncident(incidentId: number) {
+  async getSafeguardsForIncident(incidentId: number): Promise<any[]> {
     const response = await fetch(`${API_BASE_URL}/safeguards/for-incident/${incidentId}`);
     return handleResponse(response);
   },
