@@ -4,22 +4,13 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-
-// Mock org ID
-const MOCK_ORG_ID = "9a4c8fe4-0b4e-4e87-9dab-de5afdae9014"; // AirCanada
-
-interface Organization {
-  id: string;
-  name: string;
-  business_type_id: string;
-  slug: string;
-}
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 export default function RunEvaluationPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const { currentOrganization, loading: orgLoading } = useOrganization();
+  const [loading, setLoading] = useState(false);
   const [running, setRunning] = useState(false);
-  const [organization, setOrganization] = useState<Organization | null>(null);
   const [latestRound, setLatestRound] = useState<number>(0);
   const [roundNumber, setRoundNumber] = useState<number>(1);
   const [description, setDescription] = useState<string>('');
@@ -35,18 +26,17 @@ export default function RunEvaluationPage() {
   const [showEligibilityModal, setShowEligibilityModal] = useState(false);
 
   useEffect(() => {
-    loadOrganization();
-  }, []);
+    if (currentOrganization) {
+      loadRoundData();
+    }
+  }, [currentOrganization]);
 
-  async function loadOrganization() {
+  async function loadRoundData() {
+    if (!currentOrganization) return;
+    
     try {
-      // Get organization
-      const orgResponse = await fetch(`http://localhost:8000/api/v1/organizations/${MOCK_ORG_ID}`);
-      const orgData = await orgResponse.json();
-      setOrganization(orgData);
-
       // Get latest round number
-      const roundsResponse = await fetch(`http://localhost:8000/api/v1/evaluations/organizations/${MOCK_ORG_ID}/rounds`);
+      const roundsResponse = await fetch(`http://localhost:8000/api/v1/evaluations/organizations/${currentOrganization.id}/rounds`);
       const rounds = await roundsResponse.json();
       
       if (rounds.length > 0) {
@@ -59,23 +49,23 @@ export default function RunEvaluationPage() {
         setDescription('Round 1 - Initial safety evaluation');
       }
     } catch (error) {
-      console.error('Failed to load organization:', error);
-      setError('Failed to load organization data');
+      console.error('Failed to load rounds:', error);
+      setError('Failed to load round data');
     } finally {
       setLoading(false);
     }
   }
 
   async function checkEligibility() {
-    if (!organization) return;
+    if (!currentOrganization) return;
     
     setCheckingEligibility(true);
     setError('');
     
     try {
       // Get latest completed round
-      console.log('Fetching rounds for org:', organization.id);
-      const roundsResponse = await fetch(`http://localhost:8000/api/v1/evaluations/organizations/${organization.id}/rounds`);
+      console.log('Fetching rounds for org:', currentOrganization.id);
+      const roundsResponse = await fetch(`http://localhost:8000/api/v1/evaluations/organizations/${currentOrganization.id}/rounds`);
       
       if (!roundsResponse.ok) {
         throw new Error(`Failed to fetch rounds: ${roundsResponse.status} ${roundsResponse.statusText}`);
@@ -98,7 +88,7 @@ export default function RunEvaluationPage() {
       console.log('Latest round:', latestRound);
       
       // Check eligibility
-      const eligibilityUrl = `http://localhost:8000/api/v1/certifications/organizations/${organization.id}/eligibility?evaluation_round_id=${latestRound.id}`;
+      const eligibilityUrl = `http://localhost:8000/api/v1/certifications/organizations/${currentOrganization.id}/eligibility?evaluation_round_id=${latestRound.id}`;
       console.log('Checking eligibility at:', eligibilityUrl);
       
       const eligibilityResponse = await fetch(eligibilityUrl);
@@ -123,7 +113,7 @@ export default function RunEvaluationPage() {
   }
 
   async function startEvaluation() {
-    if (!organization) return;
+    if (!currentOrganization) return;
     
     setRunning(true);
     setError('');
@@ -142,7 +132,7 @@ export default function RunEvaluationPage() {
         
         // Send evaluation request
         ws.send(JSON.stringify({
-          organization_id: organization.id,
+          organization_id: currentOrganization.id,
           round_number: roundNumber,
           description: description,
           use_fake_judges: useFakeJudges
@@ -205,12 +195,30 @@ export default function RunEvaluationPage() {
     }
   }
 
-  if (loading) {
+  if (orgLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentOrganization) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🏢</div>
+          <h3 className="text-2xl font-bold text-white mb-2">No Organization Selected</h3>
+          <p className="text-gray-400 mb-6">Please select an organization from the dashboard first.</p>
+          <Link
+            href="/dashboard"
+            className="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all font-semibold"
+          >
+            Go to Dashboard
+          </Link>
         </div>
       </div>
     );
@@ -239,7 +247,7 @@ export default function RunEvaluationPage() {
               </nav>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-400">{organization?.name}</span>
+              <span className="text-sm text-gray-400">{currentOrganization?.name}</span>
               <div className="w-2 h-2 rounded-full bg-green-500" />
             </div>
           </div>
@@ -268,8 +276,8 @@ export default function RunEvaluationPage() {
               <div className="p-4 rounded-xl bg-background/50 border border-purple-500/20">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-white font-medium">{organization?.name}</p>
-                    <p className="text-sm text-gray-400">ID: {organization?.id.slice(0, 8)}...</p>
+                    <p className="text-white font-medium">{currentOrganization?.name}</p>
+                    <p className="text-sm text-gray-400">ID: {currentOrganization?.id.slice(0, 8)}...</p>
                   </div>
                   <div className="px-3 py-1 rounded-lg bg-purple-500/20 text-purple-300 text-sm">
                     Active
@@ -407,7 +415,7 @@ export default function RunEvaluationPage() {
         <div className="flex gap-4">
           <button
             onClick={startEvaluation}
-            disabled={running || !organization}
+            disabled={running || !currentOrganization}
             className="flex-1 inline-flex items-center justify-center gap-3 px-8 py-4 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all shadow-lg hover:shadow-purple-glow disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-lg"
           >
             {running ? (
@@ -427,7 +435,7 @@ export default function RunEvaluationPage() {
 
           <button
             onClick={checkEligibility}
-            disabled={checkingEligibility || !organization}
+            disabled={checkingEligibility || !currentOrganization}
             className="flex-1 inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-lg"
           >
             {checkingEligibility ? (

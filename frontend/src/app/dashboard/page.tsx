@@ -6,12 +6,17 @@ import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api } from '@/lib/api/client';
 import type { EvaluationRound, RoundStatistics, SeverityGrade } from '@/lib/types';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 // Dynamically import Plotly
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
-// Mock data for demo (replace with real API calls)
-const MOCK_ORG_ID = "9a4c8fe4-0b4e-4e87-9dab-de5afdae9014"; // AirCanada
+interface BusinessType {
+  id: string;
+  name: string;
+  industry: string;
+  description: string;
+}
 
 interface ComparisonData {
   organization_id: string
@@ -46,6 +51,19 @@ interface ComparisonData {
 }
 
 export default function DashboardPage() {
+  // Use global organization context
+  const { 
+    organizations, 
+    selectedOrg, 
+    setSelectedOrg, 
+    currentOrganization, 
+    loading: orgLoading,
+    refreshOrganizations 
+  } = useOrganization();
+  
+  const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
+  const [showCreateOrgModal, setShowCreateOrgModal] = useState(false);
+  
   const [rounds, setRounds] = useState<EvaluationRound[]>([]);
   const [selectedRound, setSelectedRound] = useState<string>('');
   const [stats, setStats] = useState<RoundStatistics | null>(null);
@@ -60,9 +78,30 @@ export default function DashboardPage() {
   const [eligibilityResult, setEligibilityResult] = useState<any>(null);
   const [showEligibilityModal, setShowEligibilityModal] = useState(false);
 
+  // New org creation form
+  const [newOrgName, setNewOrgName] = useState('');
+  const [newOrgSlug, setNewOrgSlug] = useState('');
+  const [newOrgBusinessType, setNewOrgBusinessType] = useState('');
+  const [newOrgContactEmail, setNewOrgContactEmail] = useState('');
+  const [newOrgContactName, setNewOrgContactName] = useState('');
+  const [creatingOrg, setCreatingOrg] = useState(false);
+
   useEffect(() => {
-    loadRounds();
+    loadBusinessTypes();
   }, []);
+
+  // Set loading to false once organizations are loaded
+  useEffect(() => {
+    if (!orgLoading) {
+      setLoading(false);
+    }
+  }, [orgLoading]);
+
+  useEffect(() => {
+    if (selectedOrg) {
+      loadRounds();
+    }
+  }, [selectedOrg]);
 
   useEffect(() => {
     if (selectedRound) {
@@ -87,19 +126,36 @@ export default function DashboardPage() {
     return () => clearInterval(timer);
   }, [isPlaying, comparisonData]);
 
-  async function loadRounds() {
+  async function loadBusinessTypes() {
     try {
-      const data = await api.getOrganizationRounds(MOCK_ORG_ID);
+      const typesResponse = await fetch('http://localhost:8000/api/v1/business-types/');
+      if (!typesResponse.ok) {
+        throw new Error(`Failed to fetch business types: ${typesResponse.status}`);
+      }
+      
+      const types = await typesResponse.json();
+      console.log('✅ Loaded business types:', types.length);
+      setBusinessTypes(types);
+    } catch (error) {
+      console.error('❌ Failed to load business types:', error);
+    }
+  }
+
+  async function loadRounds() {
+    if (!selectedOrg) return;
+    
+    try {
+      const data = await api.getOrganizationRounds(selectedOrg);
       setRounds(data);
       if (data.length > 0) {
         setSelectedRound(data[0].id);
         // Load stats for all rounds
-        const statsPromises = data.map(round => api.getRoundStatistics(round.id));
+        const statsPromises = data.map((round: any) => api.getRoundStatistics(round.id));
         const allStats = await Promise.all(statsPromises);
-        setAllRoundsStats(allStats);
+        setAllRoundsStats(allStats as any);
         
         // Load comparison data for category breakdown
-        const compRes = await fetch(`http://localhost:8000/api/v1/comparisons/organizations/${MOCK_ORG_ID}/rounds-comparison`);
+        const compRes = await fetch(`http://localhost:8000/api/v1/comparisons/organizations/${selectedOrg}/rounds-comparison`);
         if (compRes.ok) {
           const compData = await compRes.json();
           setComparisonData(compData);
@@ -107,8 +163,57 @@ export default function DashboardPage() {
       }
     } catch (error) {
       console.error('Failed to load rounds:', error);
+    }
+  }
+  
+  async function createOrganization() {
+    if (!newOrgName || !newOrgSlug || !newOrgBusinessType) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
+    setCreatingOrg(true);
+    
+    try {
+      const response = await fetch('http://localhost:8000/api/v1/organizations/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newOrgName,
+          slug: newOrgSlug,
+          business_type_id: newOrgBusinessType,
+          contact_email: newOrgContactEmail || null,
+          contact_name: newOrgContactName || null,
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to create organization');
+      }
+      
+      const newOrg = await response.json();
+      
+      // Reload organizations
+      await refreshOrganizations();
+      
+      // Select the new org
+      setSelectedOrg(newOrg.id);
+      
+      // Close modal and reset form
+      setShowCreateOrgModal(false);
+      setNewOrgName('');
+      setNewOrgSlug('');
+      setNewOrgBusinessType('');
+      setNewOrgContactEmail('');
+      setNewOrgContactName('');
+    } catch (error: any) {
+      console.error('Failed to create organization:', error);
+      alert(error.message || 'Failed to create organization');
     } finally {
-      setLoading(false);
+      setCreatingOrg(false);
     }
   }
 
@@ -122,13 +227,13 @@ export default function DashboardPage() {
   }
 
   async function checkEligibility() {
-    if (!selectedRound) return;
+    if (!selectedRound || !selectedOrg) return;
     
     setCheckingEligibility(true);
     
     try {
       // Check eligibility for the selected round
-      const eligibilityUrl = `http://localhost:8000/api/v1/certifications/organizations/${MOCK_ORG_ID}/eligibility?evaluation_round_id=${selectedRound}`;
+      const eligibilityUrl = `http://localhost:8000/api/v1/certifications/organizations/${selectedOrg}/eligibility?evaluation_round_id=${selectedRound}`;
       console.log('Checking eligibility at:', eligibilityUrl);
       
       const eligibilityResponse = await fetch(eligibilityUrl);
@@ -152,7 +257,7 @@ export default function DashboardPage() {
     }
   }
 
-  if (loading) {
+  if (orgLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -190,8 +295,29 @@ export default function DashboardPage() {
               </nav>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-400">AirCanada Corp</span>
-              <div className="w-2 h-2 rounded-full bg-green-500" />
+              {/* Organization Selector */}
+              <select
+                value={selectedOrg || ''}
+                onChange={(e) => setSelectedOrg(e.target.value)}
+                className="px-4 py-2 bg-background border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500 transition-colors"
+              >
+                {organizations.length === 0 && (
+                  <option value="">No organizations found</option>
+                )}
+                {organizations.map(org => (
+                  <option key={org.id} value={org.id}>
+                    {org.name}
+                  </option>
+                ))}
+              </select>
+              
+              {/* Create Org Button */}
+              <button
+                onClick={() => setShowCreateOrgModal(true)}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+              >
+                + New Org
+              </button>
             </div>
           </div>
         </div>
@@ -206,6 +332,17 @@ export default function DashboardPage() {
           <p className="text-gray-400">
             Multi-round AI safety testing with comprehensive metrics
           </p>
+          
+          {/* Debug Info (remove after fixing) */}
+          <div className="mt-4 p-4 bg-purple-900/20 border border-purple-500/30 rounded-lg text-xs">
+            <div>Organizations loaded: {organizations.length}</div>
+            <div>Selected org: {selectedOrg || 'none'}</div>
+            <div>Rounds loaded: {rounds.length}</div>
+            <div>Selected round: {selectedRound || 'none'}</div>
+            {selectedOrg && organizations.find(o => o.id === selectedOrg) && (
+              <div>Current org: {organizations.find(o => o.id === selectedOrg)?.name}</div>
+            )}
+          </div>
         </div>
 
         {/* Tabs */}
@@ -237,25 +374,43 @@ export default function DashboardPage() {
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <>
-            {/* Round Selector */}
-            <div className="mb-8">
-              <label className="block text-sm font-medium text-gray-400 mb-2">
-                Select Evaluation Round
-              </label>
-              <select
-                value={selectedRound}
-                onChange={(e) => setSelectedRound(e.target.value)}
-                className="w-full md:w-96 px-4 py-3 bg-card border border-purple-500/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
-              >
-                {rounds.map((round) => (
-                  <option key={round.id} value={round.id}>
-                    Round {round.round_number} - {round.status} ({new Date(round.started_at).toLocaleDateString()})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {rounds.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-6xl mb-4">📊</div>
+                <h3 className="text-2xl font-bold text-white mb-2">No Evaluation Rounds Yet</h3>
+                <p className="text-gray-400 mb-6">
+                  {selectedOrg 
+                    ? `This organization hasn't run any evaluation rounds yet.`
+                    : 'Please select an organization first.'}
+                </p>
+                <Link
+                  href="/evaluations/run"
+                  className="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all font-semibold"
+                >
+                  🚀 Run First Evaluation
+                </Link>
+              </div>
+            ) : (
+              <>
+                {/* Round Selector */}
+                <div className="mb-8">
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    Select Evaluation Round
+                  </label>
+                  <select
+                    value={selectedRound}
+                    onChange={(e) => setSelectedRound(e.target.value)}
+                    className="w-full md:w-96 px-4 py-3 bg-card border border-purple-500/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+                  >
+                    {rounds.map((round) => (
+                      <option key={round.id} value={round.id}>
+                        Round {round.round_number} - {round.status} ({new Date(round.started_at).toLocaleDateString()})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            {stats && (
+                {stats && (
               <>
                 {/* KPI Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -386,6 +541,8 @@ export default function DashboardPage() {
                     )}
                   </button>
                 </div>
+              </>
+            )}
               </>
             )}
           </>
@@ -893,6 +1050,150 @@ export default function DashboardPage() {
                       Close
                     </button>
                   )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Create Organization Modal */}
+        {showCreateOrgModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="max-w-2xl w-full bg-card rounded-2xl border border-purple-500/30 shadow-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className="p-6 bg-gradient-to-r from-purple-600/20 to-blue-600/20 border-b border-purple-500/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="text-4xl">🏢</div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">Create Organization</h2>
+                      <p className="text-sm text-gray-300 mt-1">Set up a new organization for evaluation</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowCreateOrgModal(false)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Form */}
+              <div className="p-6 space-y-4">
+                {/* Organization Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Organization Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={newOrgName}
+                    onChange={(e) => {
+                      setNewOrgName(e.target.value);
+                      // Auto-generate slug from name
+                      setNewOrgSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
+                    }}
+                    placeholder="e.g., AirCanada Corp"
+                    className="w-full px-4 py-3 bg-background border border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
+                  />
+                </div>
+
+                {/* Slug */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Slug * <span className="text-xs text-gray-500">(URL-friendly identifier)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newOrgSlug}
+                    onChange={(e) => setNewOrgSlug(e.target.value)}
+                    placeholder="e.g., aircanada"
+                    className="w-full px-4 py-3 bg-background border border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors font-mono text-sm"
+                  />
+                </div>
+
+                {/* Business Type */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Business Type *
+                  </label>
+                  <select
+                    value={newOrgBusinessType}
+                    onChange={(e) => setNewOrgBusinessType(e.target.value)}
+                    className="w-full px-4 py-3 bg-background border border-purple-500/30 rounded-xl text-white focus:outline-none focus:border-purple-500 transition-colors"
+                  >
+                    <option value="">Select a business type...</option>
+                    {businessTypes.map(type => (
+                      <option key={type.id} value={type.id}>
+                        {type.name} - {type.industry}
+                      </option>
+                    ))}
+                  </select>
+                  {newOrgBusinessType && businessTypes.find(t => t.id === newOrgBusinessType) && (
+                    <p className="text-xs text-gray-400 mt-2">
+                      {businessTypes.find(t => t.id === newOrgBusinessType)?.description}
+                    </p>
+                  )}
+                </div>
+
+                {/* Contact Email (Optional) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Contact Email <span className="text-xs text-gray-500">(optional)</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={newOrgContactEmail}
+                    onChange={(e) => setNewOrgContactEmail(e.target.value)}
+                    placeholder="e.g., safety@aircanada.com"
+                    className="w-full px-4 py-3 bg-background border border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
+                  />
+                </div>
+
+                {/* Contact Name (Optional) */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Contact Person <span className="text-xs text-gray-500">(optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newOrgContactName}
+                    onChange={(e) => setNewOrgContactName(e.target.value)}
+                    placeholder="e.g., John Doe"
+                    className="w-full px-4 py-3 bg-background border border-purple-500/30 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors"
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => setShowCreateOrgModal(false)}
+                    disabled={creatingOrg}
+                    className="flex-1 py-3 bg-background border border-purple-500/30 text-white rounded-xl hover:border-purple-500 transition-all font-semibold disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={createOrganization}
+                    disabled={creatingOrg || !newOrgName || !newOrgSlug || !newOrgBusinessType}
+                    className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {creatingOrg ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Creating...
+                      </div>
+                    ) : (
+                      '🚀 Create Organization'
+                    )}
+                  </button>
                 </div>
               </div>
             </motion.div>

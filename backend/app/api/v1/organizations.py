@@ -66,13 +66,14 @@ def list_organizations(
     if business_type_id:
         orgs = OrganizationRepository.get_by_business_type(db, business_type_id)
     else:
-        orgs = OrganizationRepository.get_all(db, limit=limit, offset=offset)
+        orgs = OrganizationRepository.get_all(db, skip=offset, limit=limit)
     
     # Filter by active status if provided
     if is_active is not None:
         orgs = [org for org in orgs if org.is_active == is_active]
     
-    return orgs
+    # Convert to Pydantic models explicitly to ensure proper serialization
+    return [OrganizationResponse.model_validate(org) for org in orgs]
 
 
 @router.get("/{organization_id}", response_model=OrganizationResponse)
@@ -85,7 +86,7 @@ def get_organization(
     if not org:
         raise HTTPException(status_code=404, detail=f"Organization {organization_id} not found")
     
-    return org
+    return OrganizationResponse.model_validate(org)
 
 
 @router.get("/slug/{slug}", response_model=OrganizationResponse)
@@ -98,7 +99,7 @@ def get_organization_by_slug(
     if not org:
         raise HTTPException(status_code=404, detail=f"Organization with slug '{slug}' not found")
     
-    return org
+    return OrganizationResponse.model_validate(org)
 
 
 @router.patch("/{organization_id}", response_model=OrganizationResponse)
@@ -113,10 +114,10 @@ def update_organization(
         raise HTTPException(status_code=404, detail=f"Organization {organization_id} not found")
     
     # Update fields
-    update_data = request.dict(exclude_unset=True)
+    update_data = request.model_dump(exclude_unset=True)
     updated_org = OrganizationRepository.update(db, organization_id, **update_data)
     
-    return updated_org
+    return OrganizationResponse.model_validate(updated_org)
 
 
 @router.delete("/{organization_id}", status_code=204)

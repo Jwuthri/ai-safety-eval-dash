@@ -3,9 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-
-// Mock org ID
-const MOCK_ORG_ID = "9a4c8fe4-0b4e-4e87-9dab-de5afdae9014"; // AirCanada
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 interface TaxonomyNode {
   name: string;
@@ -19,20 +17,25 @@ interface TaxonomyNode {
 }
 
 export default function TaxonomyPage() {
-  const [loading, setLoading] = useState(true);
+  const { currentOrganization, loading: orgLoading } = useOrganization();
+  const [loading, setLoading] = useState(false);
   const [taxonomy, setTaxonomy] = useState<Record<string, TaxonomyNode>>({});
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [expandedSubCategories, setExpandedSubCategories] = useState<Set<string>>(new Set());
   const [selectedScenario, setSelectedScenario] = useState<any>(null);
 
   useEffect(() => {
-    loadTaxonomy();
-  }, []);
+    if (currentOrganization) {
+      loadTaxonomy();
+    }
+  }, [currentOrganization]);
 
   async function loadTaxonomy() {
+    if (!currentOrganization) return;
+    
     try {
       // Fetch scenarios and build taxonomy tree
-      const response = await fetch(`http://localhost:8000/api/v1/scenarios?business_type_id=bfae6e2f-5a17-4d14-afee-5cf13fa5310b`);
+      const response = await fetch(`http://localhost:8000/api/v1/scenarios?business_type_id=${currentOrganization.business_type_id}`);
       const scenarios = await response.json();
 
       // Build hierarchical structure
@@ -98,12 +101,30 @@ export default function TaxonomyPage() {
     setExpandedSubCategories(newExpanded);
   }
 
-  if (loading) {
+  if (orgLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-400">Loading taxonomy...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentOrganization) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🏢</div>
+          <h3 className="text-2xl font-bold text-white mb-2">No Organization Selected</h3>
+          <p className="text-gray-400 mb-6">Please select an organization from the dashboard first.</p>
+          <Link
+            href="/dashboard"
+            className="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all font-semibold"
+          >
+            Go to Dashboard
+          </Link>
         </div>
       </div>
     );
@@ -134,7 +155,7 @@ export default function TaxonomyPage() {
               </nav>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-400">AirCanada Corp</span>
+              <span className="text-sm text-gray-400">{currentOrganization.name}</span>
               <div className="w-2 h-2 rounded-full bg-green-500" />
             </div>
           </div>
