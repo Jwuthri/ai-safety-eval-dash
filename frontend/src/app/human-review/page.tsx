@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+
+export const dynamic = 'force-dynamic';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
 
@@ -30,7 +32,7 @@ const SEVERITY_COLORS: Record<string, string> = {
   P0: 'text-red-900',
 }
 
-export default function HumanReviewPage() {
+function HumanReviewContent() {
   const searchParams = useSearchParams()
   const roundId = searchParams?.get('round_id')
   
@@ -271,3 +273,10 @@ export default function HumanReviewPage() {
   )
 }
 
+export default function HumanReviewPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto p-8">Loading...</div>}>
+      <HumanReviewContent />
+    </Suspense>
+  )
+}

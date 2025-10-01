@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useReducer, useEffect } from "react";
-import { useAuth } from "@clerk/nextjs";
+// import { useAuth } from "@clerk/nextjs";
 import { Message } from "@/types/chat";
 import { createApiClient } from "@/lib/api";
 
@@ -74,7 +74,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, dispatch] = useReducer(chatReducer, initialState);
-  const { getToken } = useAuth();
+  // const { getToken } = useAuth();
 
   // Generate session ID on mount
   useEffect(() => {
@@ -83,7 +83,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const getApiClient = async () => {
-    const token = await getToken();
+    // const token = await getToken();
+    const token = null; // Temporarily disabled Clerk auth
     return createApiClient(token);
   };
 

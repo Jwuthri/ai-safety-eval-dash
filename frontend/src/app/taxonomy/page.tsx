@@ -9,7 +9,7 @@ import { api } from '@/lib/api/client';
 interface TaxonomyNode {
   name: string;
   count: number;
-  children?: TaxonomyNode[];
+  children?: Record<string, TaxonomyNode>;
   scenarios?: Array<{
     id: string;
     input_prompt: string;
@@ -55,9 +55,10 @@ export default function TaxonomyPage() {
         
         if (!tree[category].children) tree[category].children = {};
         const subCatKey = subCategory;
+        const children = tree[category].children!;
         
-        if (!tree[category].children[subCatKey]) {
-          tree[category].children[subCatKey] = {
+        if (!children[subCatKey]) {
+          children[subCatKey] = {
             name: subCategory,
             count: 0,
             scenarios: []
@@ -65,8 +66,8 @@ export default function TaxonomyPage() {
         }
         
         tree[category].count++;
-        tree[category].children[subCatKey].count++;
-        tree[category].children[subCatKey].scenarios!.push({
+        children[subCatKey].count++;
+        children[subCatKey].scenarios!.push({
           id: scenario.id,
           input_prompt: scenario.input_prompt,
           use_case: scenario.use_case

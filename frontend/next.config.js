@@ -14,11 +14,8 @@ const nextConfig = {
       },
     ]
   },
-  output: 'standalone',
-  experimental: {
-    // Enable if using app directory (Next.js 13+)
-    appDir: false,
-  },
+  // Skip static generation for certain pages that need dynamic rendering
+  skipTrailingSlashRedirect: true,
 }
 
 module.exports = nextConfig

@@ -1265,6 +1265,7 @@ function getSeverityColor(severity: SeverityGrade): string {
     P2: 'text-orange-500',
     P1: 'text-red-600',
     P0: 'text-red-900',
+    UNK: 'text-gray-400',
   };
   return colors[severity] || 'text-gray-400';
 }

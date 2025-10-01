@@ -5,11 +5,11 @@ import { motion } from "framer-motion";
 import { User, Bot, Copy, ThumbsUp, ThumbsDown, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { ChatMessage } from "@/types/chat";
-import { User as ClerkUser } from "@clerk/nextjs/server";
+import { UserResource } from "@clerk/types";
 
 interface MessageItemProps {
   message: ChatMessage;
-  user?: ClerkUser | null;
+  user?: UserResource | null;
 }
 
 export function MessageItem({ message, user }: MessageItemProps) {

@@ -423,6 +423,11 @@ uv run alembic revision --autogenerate -m "Description"
 uv run alembic upgrade head
 ```
 
+#### Local tunnel
+```bash
+ssh -R ai-safety-eval:80:localhost:8000 serveo.net
+-> it keeps the same url over and over
+```
 
 ---
 
