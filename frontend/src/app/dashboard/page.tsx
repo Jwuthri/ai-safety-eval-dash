@@ -520,6 +520,15 @@ export default function DashboardPage() {
                     </svg>
                     Run New Round
                   </Link>
+                  <Link
+                    href={`/human-review${selectedRound ? `?round_id=${selectedRound}` : ''}`}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl hover:from-amber-700 hover:to-orange-700 transition-all shadow-lg hover:shadow-orange-glow"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Human in the Loop
+                  </Link>
                   <button
                     onClick={checkEligibility}
                     disabled={checkingEligibility || !selectedRound}

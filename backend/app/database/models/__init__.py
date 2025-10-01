@@ -15,7 +15,7 @@ from .business_type import BusinessType
 from .scenario import Scenario
 from .evaluation_round import EvaluationRound, EvaluationRoundStatus
 from .evaluation_result import EvaluationResult
-from .human_review import HumanReview, ReviewStatus
+from .human_review import HumanReview
 from .agent_iteration import AgentIteration
 from .aiuc_certification import AiucCertification, CertificationStatus
 from .scenario_conversation import ScenarioConversation
@@ -48,6 +48,5 @@ __all__ = [
 
     # AI Safety Evaluation Dashboard Enums
     "EvaluationRoundStatus",
-    "ReviewStatus",
     "CertificationStatus",
 ]
