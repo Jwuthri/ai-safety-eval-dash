@@ -80,7 +80,7 @@ export default function SafetyStoryPage() {
   async function loadSafeguardsForIncident(incidentId: string) {
     setLoadingSafeguards(true);
     try {
-      const data = await api.getSafeguardsForIncident(parseInt(incidentId));
+      const data = await api.getSafeguardsForIncident(incidentId);
       setSafeguards(data);
     } catch (error) {
       console.error('Failed to load safeguards:', error);

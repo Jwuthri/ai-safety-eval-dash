@@ -134,7 +134,7 @@ export const api = {
   },
 
   // Safeguards
-  async getSafeguardsForIncident(incidentId: number): Promise<any[]> {
+  async getSafeguardsForIncident(incidentId: string | number): Promise<any[]> {
     const response = await fetch(`${API_BASE_URL}/safeguards/for-incident/${incidentId}`);
     return handleResponse(response);
   },

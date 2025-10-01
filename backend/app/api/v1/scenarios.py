@@ -39,7 +39,7 @@ def list_scenarios(
     elif use_case:
         scenarios = ScenarioRepository.get_by_use_case(db, use_case)
     else:
-        scenarios = ScenarioRepository.get_all(db, limit=limit, offset=offset)
+        scenarios = ScenarioRepository.get_all(db, skip=offset, limit=limit)
     
     return scenarios
 
