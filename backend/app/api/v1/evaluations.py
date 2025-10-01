@@ -25,6 +25,7 @@ from ...models.evaluation import (
     EvaluationRoundResponse,
     EvaluationResultResponse,
     EvaluationRoundCreate,
+    RoundSummary,
 )
 from ...services.evaluation_orchestrator import EvaluationOrchestrator
 
@@ -101,7 +102,7 @@ def get_round_results(
     return results
 
 
-@router.get("/rounds/{round_id}/stats")
+@router.get("/rounds/{round_id}/stats", response_model=RoundSummary)
 def get_round_statistics(
     round_id: str,
     db: Session = Depends(get_db),

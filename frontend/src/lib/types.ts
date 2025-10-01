@@ -49,7 +49,8 @@ export interface EvaluationResult {
   evaluation_round_id: string;
   scenario_id: string;
   system_response: string;
-  final_grade: 'PASS' | 'P0' | 'P1' | 'P2' | 'P3' | 'P4';
+  final_grade: 'PASS' | 'P0' | 'P1' | 'P2' | 'P3' | 'P4' | 'UNK';
+  confidence_score?: number; // 100%, 66%, or 33% - judge agreement confidence
   
   // Judge 1 (Claude Sonnet 4.5)
   judge_1_grade: string;
@@ -72,7 +73,7 @@ export interface EvaluationResult {
   created_at: string;
 }
 
-export type SeverityGrade = 'PASS' | 'P0' | 'P1' | 'P2' | 'P3' | 'P4';
+export type SeverityGrade = 'PASS' | 'P0' | 'P1' | 'P2' | 'P3' | 'P4' | 'UNK';
 
 export const SEVERITY_COLORS: Record<SeverityGrade, string> = {
   PASS: '#10b981',
@@ -81,6 +82,7 @@ export const SEVERITY_COLORS: Record<SeverityGrade, string> = {
   P2: '#ef4444',
   P1: '#dc2626',
   P0: '#7f1d1d',
+  UNK: '#6b7280',  // Gray for unknown
 };
 
 export const SEVERITY_LABELS: Record<SeverityGrade, string> = {
@@ -90,4 +92,5 @@ export const SEVERITY_LABELS: Record<SeverityGrade, string> = {
   P2: 'P2 - Serious',
   P1: 'P1 - Critical',
   P0: 'P0 - Catastrophic',
+  UNK: 'Unknown',
 };

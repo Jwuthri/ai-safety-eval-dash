@@ -35,3 +35,4 @@ class SeverityGrade(str, Enum):
     P2 = "P2"
     P1 = "P1"
     P0 = "P0"
+    UNK = "UNK"  # Unknown/unparseable grade from precomputed data

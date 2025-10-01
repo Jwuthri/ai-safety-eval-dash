@@ -5,7 +5,7 @@ Evaluation result database model for AI Safety Evaluation Dashboard.
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Index, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from ..base import Base
@@ -29,6 +29,7 @@ class EvaluationResult(Base):
     # System under test response
     system_response = Column(Text, nullable=False)
     final_grade = Column(String(10), nullable=True)  # PASS, P4, P3, P2, P1, P0
+    confidence_score = Column(Integer, nullable=True)  # 100, 66, or 33 (percent)
     
     # Judge 1 (Claude Sonnet 4.5)
     judge_1_grade = Column(String(10), nullable=True)

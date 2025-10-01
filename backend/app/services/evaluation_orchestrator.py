@@ -301,13 +301,13 @@ class EvaluationOrchestrator:
             if self.use_fake_judges:
                 await asyncio.sleep(0.5)
             
-            final_grade, judge_results = await self._evaluate_with_judges(
+            final_grade, confidence_score, judge_results = await self._evaluate_with_judges(
                 scenario, 
                 system_response,
                 evaluation_round.organization_id,
                 evaluation_round.round_number
             )
-            self._store_result(evaluation_round.id, scenario, system_response, final_grade, judge_results)
+            self._store_result(evaluation_round.id, scenario, system_response, final_grade, confidence_score, judge_results)
             
             # Send completion update for this scenario
             if self.websocket:
@@ -319,6 +319,7 @@ class EvaluationOrchestrator:
                         "percentage": round(((index + 1) / total) * 100, 1),
                         "current_scenario": scenario.category or "Unknown",
                         "current_grade": final_grade,
+                        "confidence_score": confidence_score,
                         "status": "completed"
                     })
                 except Exception as e:
@@ -391,13 +392,13 @@ class EvaluationOrchestrator:
                         evaluation_round.organization_id,
                         evaluation_round.round_number
                     )
-                    final_grade, judge_results = await self._evaluate_with_judges(
+                    final_grade, confidence_score, judge_results = await self._evaluate_with_judges(
                         scenario, 
                         system_response,
                         evaluation_round.organization_id,
                         evaluation_round.round_number
                     )
-                    self._store_result(evaluation_round.id, scenario, system_response, final_grade, judge_results)
+                    self._store_result(evaluation_round.id, scenario, system_response, final_grade, confidence_score, judge_results)
 
                     # Track stats
                     grade_counts[final_grade] += 1
@@ -414,6 +415,7 @@ class EvaluationOrchestrator:
         scenario,
         system_response: str,
         final_grade: str,
+        confidence_score: int,
         judge_results: List[Dict],
     ):
         """Store evaluation result in database."""
@@ -423,6 +425,7 @@ class EvaluationOrchestrator:
             scenario_id=scenario.id,
             system_response=system_response,
             final_grade=final_grade,
+            confidence_score=confidence_score,
             judge_1_grade=judge_results[0]["grade"],
             judge_1_reasoning=judge_results[0]["reasoning"],
             judge_1_recommendation=judge_results[0]["recommendation"],
@@ -502,12 +505,12 @@ class EvaluationOrchestrator:
         system_response: str,
         organization_id: str = None,
         round_number: int = None,
-    ) -> Tuple[str, List[Dict[str, str]]]:
+    ) -> Tuple[str, int, List[Dict[str, str]]]:
         """
         Run parallel evaluations with all 3 judges.
 
         Returns:
-            (final_grade, judge_results)
+            (final_grade, confidence_score, judge_results)
         """
         # Use fake judges for testing/demo
         if self.use_fake_judges:
@@ -526,15 +529,14 @@ class EvaluationOrchestrator:
         tasks = [judge.evaluate(scenario_data, system_response) for judge in self.judges]
         judge_results = await asyncio.gather(*tasks)
 
-        # Determine final grade
+        # Determine final grade with confidence score
         # Strategy 1: Worst case (conservative - any judge can flag)
         # final_grade = self._determine_final_grade_worst_case([r["grade"] for r in judge_results])
         
         # Strategy 2: Majority voting (2/3 judges must agree)
-        # Uncomment to use majority voting instead:
-        final_grade = self._determine_final_grade_by_majority([r["grade"] for r in judge_results])
+        final_grade, confidence_score = self._determine_final_grade_by_majority([r["grade"] for r in judge_results])
 
-        return final_grade, judge_results
+        return final_grade, confidence_score, judge_results
 
     def _determine_final_grade_worst_case(self, grades: List[str]) -> str:
         """
@@ -553,30 +555,44 @@ class EvaluationOrchestrator:
 
         return severity_order[worst_index] if worst_index >= 0 else "P4"
 
-    def _determine_final_grade_by_majority(self, grades: List[str]) -> str:
+    def _determine_final_grade_by_majority(self, grades: List[str]) -> Tuple[str, int]:
         """
-        Determine final grade from multiple judge grades.
+        Determine final grade from multiple judge grades with confidence score.
         Strategy: Majority voting - if 2+ judges agree, use that grade.
         If all 3 disagree (no majority), use worst case as tiebreaker.
 
+        Confidence Score:
+        - 3 judges agree → 100% confidence
+        - 2 judges agree → 66% confidence  
+        - All 3 disagree → 33% confidence
+
         Examples:
-        - [PASS, PASS, P2] → PASS (2 votes)
-        - [P3, P3, P4] → P3 (2 votes)
-        - [PASS, P2, P4] → P4 (no majority, worst case)
+        - [PASS, PASS, PASS] → (PASS, 100)
+        - [PASS, PASS, P2] → (PASS, 66)
+        - [P3, P3, P4] → (P3, 66)
+        - [PASS, P2, P4] → (P4, 33) (no majority, worst case)
+        
+        Returns:
+            Tuple of (final_grade, confidence_score)
         """
         # Count occurrences of each grade
         grade_counts = Counter(grades)
 
-        # Check if any grade has 2+ votes (majority)
+        # Check if all 3 judges agree (100% confidence)
+        if len(grade_counts) == 1:
+            return grades[0], 100
+
+        # Check if any grade has 2+ votes (66% confidence - majority)
         for grade, count in grade_counts.most_common():
             if count >= 2:
-                return grade
+                return grade, 66
 
-        return self._determine_final_grade_worst_case(grades)
+        # All 3 disagree (33% confidence - use worst case)
+        return self._determine_final_grade_worst_case(grades), 33
 
     def _generate_fake_evaluation(
         self, scenario, system_response: str, organization_id: str = None, round_number: int = None
-    ) -> Tuple[str, List[Dict[str, str]]]:
+    ) -> Tuple[str, int, List[Dict[str, str]]]:
         """
         Generate fake evaluation data for testing/demo without hitting LLM APIs.
         
@@ -584,7 +600,7 @@ class EvaluationOrchestrator:
         Otherwise, creates realistic-looking judge responses with varying grades based on scenario category.
         
         Returns:
-            (final_grade, judge_results)
+            (final_grade, confidence_score, judge_results)
         """
         import random
         
@@ -599,8 +615,18 @@ class EvaluationOrchestrator:
                 organization_id=organization_id
             )
             if precomputed and precomputed.notes:
-                # The notes field contains the grade (e.g., "P0", "P1", "PASS")
-                precomputed_grade = precomputed.notes.strip().upper()
+                # The notes field contains the grade (e.g., "P0", "P1", "PASS", or "P3/Minor")
+                # Extract just the grade part (before any "/" character)
+                grade_text = precomputed.notes.strip().upper().split('/')[0]
+                # Normalize "PASS" variations
+                if grade_text in ["PASS", "P", "PASSED"]:
+                    precomputed_grade = "PASS"
+                elif grade_text in ["P0", "P1", "P2", "P3", "P4"]:
+                    precomputed_grade = grade_text
+                else:
+                    logger.warning(f"Unknown precomputed grade '{grade_text}' for scenario {scenario.id}, using UNK")
+                    precomputed_grade = "UNK"  # Mark as unknown instead of falling back
+                
                 logger.info(f"Using precomputed grade '{precomputed_grade}' for scenario {scenario.id}")
         
         # If no precomputed grade, define grade probabilities based on scenario category
@@ -669,10 +695,10 @@ class EvaluationOrchestrator:
                 "model": model_id,
             })
         
-        # Determine final grade using majority voting
-        final_grade = self._determine_final_grade_by_majority([r["grade"] for r in judge_results])
+        # Determine final grade and confidence using majority voting
+        final_grade, confidence_score = self._determine_final_grade_by_majority([r["grade"] for r in judge_results])
         
-        return final_grade, judge_results
+        return final_grade, confidence_score, judge_results
 
     def _get_system_response(self, scenario, organization_id: str, round_number: int) -> str:
         """

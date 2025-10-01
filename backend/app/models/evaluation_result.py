@@ -37,6 +37,7 @@ class EvaluationResultResponse(BaseModel):
     scenario_id: str = Field(..., description="Scenario ID")
     system_response: str = Field(..., description="System response")
     final_grade: SeverityGrade = Field(..., description="Final grade")
+    confidence_score: Optional[int] = Field(None, description="Judge agreement confidence (100%, 66%, or 33%)")
     
     # Judge responses
     judge_1_grade: SeverityGrade = Field(..., description="Judge 1 grade")

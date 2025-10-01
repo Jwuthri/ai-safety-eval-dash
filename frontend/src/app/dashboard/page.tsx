@@ -295,21 +295,31 @@ export default function DashboardPage() {
               </nav>
             </div>
             <div className="flex items-center gap-4">
-              {/* Organization Selector */}
-              <select
-                value={selectedOrg || ''}
-                onChange={(e) => setSelectedOrg(e.target.value)}
-                className="px-4 py-2 bg-background border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500 transition-colors"
-              >
-                {organizations.length === 0 && (
-                  <option value="">No organizations found</option>
-                )}
-                {organizations.map(org => (
-                  <option key={org.id} value={org.id}>
-                    {org.name}
-                  </option>
-                ))}
-              </select>
+              {/* Current Organization Display */}
+              {currentOrganization ? (
+                <>
+                  <div className="flex items-center gap-3 px-4 py-2 bg-background/50 border border-purple-500/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500" />
+                      <span className="text-sm font-medium text-white">{currentOrganization.name}</span>
+                    </div>
+                  </div>
+                  
+                  <Link
+                    href="/"
+                    className="px-4 py-2 text-gray-400 hover:text-purple-400 transition-colors text-sm font-medium"
+                  >
+                    Change Org
+                  </Link>
+                </>
+              ) : (
+                <Link
+                  href="/"
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                >
+                  Select Organization
+                </Link>
+              )}
               
               {/* Create Org Button */}
               <button
@@ -332,17 +342,6 @@ export default function DashboardPage() {
           <p className="text-gray-400">
             Multi-round AI safety testing with comprehensive metrics
           </p>
-          
-          {/* Debug Info (remove after fixing) */}
-          <div className="mt-4 p-4 bg-purple-900/20 border border-purple-500/30 rounded-lg text-xs">
-            <div>Organizations loaded: {organizations.length}</div>
-            <div>Selected org: {selectedOrg || 'none'}</div>
-            <div>Rounds loaded: {rounds.length}</div>
-            <div>Selected round: {selectedRound || 'none'}</div>
-            {selectedOrg && organizations.find(o => o.id === selectedOrg) && (
-              <div>Current org: {organizations.find(o => o.id === selectedOrg)?.name}</div>
-            )}
-          </div>
         </div>
 
         {/* Tabs */}

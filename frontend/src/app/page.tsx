@@ -1,10 +1,36 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
+import { useOrganization } from '@/contexts/OrganizationContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Home() {
+  const router = useRouter();
+  const { organizations, selectedOrg, setSelectedOrg, currentOrganization, loading } = useOrganization();
+  const [showOrgSelector, setShowOrgSelector] = useState(false);
+
+  useEffect(() => {
+    // If org is already selected, could redirect to dashboard
+    // For now, just show the selector option
+  }, [selectedOrg]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-hero-gradient pt-20 pb-32">
+      <section className="relative overflow-hidden bg-hero-gradient pt-20 pb-12">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(139,92,246,0.1),transparent_50%)]" />
         
         <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
@@ -68,17 +94,71 @@ export default function Home() {
             </div>
           </div>
 
-          {/* CTA Buttons */}
-          <div className="mt-12 flex justify-center items-center">
-            <Link
-              href="/dashboard"
-              className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-semibold text-white bg-purple-600 rounded-xl hover:bg-purple-700 transition-all duration-200 shadow-lg hover:shadow-purple-glow"
-            >
-              View Dashboard
-              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </Link>
+          {/* Organization Selector */}
+          <div className="mt-12 mx-auto max-w-lg">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-white mb-2">Select Your Organization</h3>
+              <p className="text-gray-400">Choose which organization to evaluate</p>
+            </div>
+
+            {organizations.length === 0 ? (
+              <div className="p-8 rounded-2xl bg-card/50 border border-purple-500/20 text-center">
+                <p className="text-gray-400 mb-4">No organizations found</p>
+                <Link
+                  href="/dashboard"
+                  className="text-purple-400 hover:text-purple-300 font-medium"
+                >
+                  Create one in Dashboard →
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {organizations.map((org) => (
+                  <motion.button
+                    key={org.id}
+                    onClick={() => {
+                      setSelectedOrg(org.id);
+                      setTimeout(() => router.push('/dashboard'), 300);
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`w-full p-6 rounded-xl border-2 text-left transition-all ${
+                      selectedOrg === org.id
+                        ? 'bg-purple-600/20 border-purple-500 shadow-lg shadow-purple-500/20'
+                        : 'bg-card/30 border-purple-500/20 hover:border-purple-500/50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-xl font-semibold text-white mb-1">{org.name}</h4>
+                        <p className="text-sm text-gray-400">{org.slug}</p>
+                      </div>
+                      {selectedOrg === org.id && (
+                        <div className="flex items-center gap-2 text-green-400">
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            )}
+
+            {currentOrganization && (
+              <div className="mt-6 text-center">
+                <Link
+                  href="/dashboard"
+                  className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-semibold text-white bg-purple-600 rounded-xl hover:bg-purple-700 transition-all duration-200 shadow-lg hover:shadow-purple-glow"
+                >
+                  Continue to Dashboard
+                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Trust Badges */}
@@ -100,7 +180,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-background">
+      <section className="py-12 bg-background">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Feature 1 */}
