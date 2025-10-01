@@ -6,20 +6,20 @@
   :root {
     --background: 10 14 26; /* #0a0e1a */
     --foreground: 255 255 255;
-    --card: 26 31 53;
+    --card: 15 23 42; /* Dark blue slate instead of brown-ish */
     --card-foreground: 255 255 255;
     --primary: 139 92 246;
     --primary-foreground: 255 255 255;
     --secondary: 16 185 129;
     --secondary-foreground: 255 255 255;
-    --muted: 31 41 55;
+    --muted: 30 41 59; /* Dark blue-gray */
     --muted-foreground: 156 163 175;
-    --accent: 245 158 11;
+    --accent: 59 130 246; /* Blue instead of amber */
     --accent-foreground: 255 255 255;
     --destructive: 239 68 68;
     --destructive-foreground: 255 255 255;
-    --border: 55 65 81;
-    --input: 31 41 55;
+    --border: 51 65 85; /* Blue-gray borders */
+    --input: 30 41 59;
     --ring: 139 92 246;
   }
 }

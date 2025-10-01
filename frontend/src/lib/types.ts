@@ -78,7 +78,7 @@ export const SEVERITY_COLORS: Record<SeverityGrade, string> = {
   PASS: '#10b981',
   P4: '#fbbf24',
   P3: '#f97316',
-  P2: '#f59e0b',
+  P2: '#ef4444',
   P1: '#dc2626',
   P0: '#7f1d1d',
 };

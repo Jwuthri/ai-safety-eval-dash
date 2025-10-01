@@ -11,7 +11,7 @@ const config: Config = {
       colors: {
         background: "#0a0e1a",
         foreground: "#ffffff",
-        card: "#1a1f35",
+        card: "#0f172a", /* Dark blue slate instead of brown */
         "card-foreground": "#ffffff",
         primary: {
           DEFAULT: "#8b5cf6",
@@ -32,7 +32,7 @@ const config: Config = {
           foreground: "#ffffff",
         },
         accent: {
-          DEFAULT: "#f59e0b",
+          DEFAULT: "#3b82f6", /* Blue instead of amber */
           foreground: "#ffffff",
         },
         destructive: {
@@ -40,18 +40,18 @@ const config: Config = {
           foreground: "#ffffff",
         },
         muted: {
-          DEFAULT: "#1f2937",
+          DEFAULT: "#1e293b", /* Dark blue-gray */
           foreground: "#9ca3af",
         },
-        border: "#374151",
-        input: "#1f2937",
+        border: "#334155", /* Blue-gray border */
+        input: "#1e293b",
         ring: "#8b5cf6",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
         "purple-glow": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        "hero-gradient": "linear-gradient(to bottom, #0a0e1a 0%, #1a1f35 100%)",
+        "hero-gradient": "linear-gradient(to bottom, #0a0e1a 0%, #0f172a 100%)",
       },
       boxShadow: {
         "purple-glow": "0 0 40px rgba(139, 92, 246, 0.3)",

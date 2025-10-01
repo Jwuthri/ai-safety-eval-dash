@@ -198,7 +198,7 @@ Respond ONLY with valid JSON."""
 class EvaluationOrchestrator:
     """Orchestrates the AI safety evaluation pipeline."""
 
-    def __init__(self, db: Session, show_progress: bool = False, use_fake_judges: bool = False):
+    def __init__(self, db: Session, show_progress: bool = False, use_fake_judges: bool = False, websocket = None):
         """
         Initialize the orchestrator.
         
@@ -206,13 +206,15 @@ class EvaluationOrchestrator:
             db: Database session
             show_progress: Show rich console progress (True for CLI/notebook, False for API)
             use_fake_judges: Use fake evaluation data instead of real LLM calls (for testing/demo)
+            websocket: Optional WebSocket connection for real-time progress updates
         """
         self.db = db
         self.show_progress = show_progress
         self.use_fake_judges = use_fake_judges
+        self.websocket = websocket
         self.judges = [
             JudgeAgent("Claude Sonnet 4.5", JudgeAgent.JUDGE_MODELS["claude_sonnet_4_5"]),
-            JudgeAgent("GPT-5.5 Mini", JudgeAgent.JUDGE_MODELS["gpt_5_mini"]),
+            JudgeAgent("GPT-5-mini", JudgeAgent.JUDGE_MODELS["gpt_5_mini"]),
             JudgeAgent("Grok-4 Fast", JudgeAgent.JUDGE_MODELS["grok_4_fast"]),
         ]
 
@@ -272,14 +274,67 @@ class EvaluationOrchestrator:
 
     async def _run_without_progress(self, evaluation_round, scenarios):
         """Run evaluations without progress display (for FastAPI)."""
-        for scenario in scenarios:
+        total = len(scenarios)
+        
+        for index, scenario in enumerate(scenarios):
+            # Send progress update via WebSocket
+            if self.websocket:
+                try:
+                    await self.websocket.send_json({
+                        "type": "progress",
+                        "current": index,
+                        "total": total,
+                        "percentage": round((index / total) * 100, 1),
+                        "current_scenario": scenario.category or "Unknown",
+                        "status": "evaluating"
+                    })
+                except Exception as e:
+                    logger.warning(f"Failed to send WebSocket update: {e}")
+            
             system_response = self._get_system_response(
                 scenario, 
                 evaluation_round.organization_id, 
                 evaluation_round.round_number
             )
-            final_grade, judge_results = await self._evaluate_with_judges(scenario, system_response)
+            
+            # Add delay for fake judges to simulate processing
+            if self.use_fake_judges:
+                await asyncio.sleep(0.5)
+            
+            final_grade, judge_results = await self._evaluate_with_judges(
+                scenario, 
+                system_response,
+                evaluation_round.organization_id,
+                evaluation_round.round_number
+            )
             self._store_result(evaluation_round.id, scenario, system_response, final_grade, judge_results)
+            
+            # Send completion update for this scenario
+            if self.websocket:
+                try:
+                    await self.websocket.send_json({
+                        "type": "progress",
+                        "current": index + 1,
+                        "total": total,
+                        "percentage": round(((index + 1) / total) * 100, 1),
+                        "current_scenario": scenario.category or "Unknown",
+                        "current_grade": final_grade,
+                        "status": "completed"
+                    })
+                except Exception as e:
+                    logger.warning(f"Failed to send WebSocket update: {e}")
+        
+        # Send final completion message
+        if self.websocket:
+            try:
+                await self.websocket.send_json({
+                    "type": "complete",
+                    "round_id": evaluation_round.id,
+                    "total": total,
+                    "message": "Evaluation round completed successfully"
+                })
+            except Exception as e:
+                logger.warning(f"Failed to send WebSocket completion: {e}")
 
     async def _run_with_progress(self, evaluation_round, org, scenarios):
         """Run evaluations with rich progress display (for CLI/notebook)."""
@@ -293,7 +348,7 @@ class EvaluationOrchestrator:
                     f"[white]Organization:[/white] [yellow]{org.name}[/yellow]\n"
                     f"[white]Business Type:[/white] [yellow]{org.business_type.name}[/yellow]\n"
                     f"[white]Test Scenarios:[/white] [yellow]{len(scenarios)}[/yellow]\n"
-                    f"[white]Judges:[/white] [yellow]Claude Sonnet 4.5, GPT-5, Grok-4 Fast[/yellow]",
+                    f"[white]Judges:[/white] [yellow]Claude Sonnet 4.5, GPT-5-mini, Grok-4 Fast[/yellow]",
                     title="[bold green]Starting Evaluation[/bold green]",
                     border_style="green",
                 )
@@ -336,7 +391,12 @@ class EvaluationOrchestrator:
                         evaluation_round.organization_id,
                         evaluation_round.round_number
                     )
-                    final_grade, judge_results = await self._evaluate_with_judges(scenario, system_response)
+                    final_grade, judge_results = await self._evaluate_with_judges(
+                        scenario, 
+                        system_response,
+                        evaluation_round.organization_id,
+                        evaluation_round.round_number
+                    )
                     self._store_result(evaluation_round.id, scenario, system_response, final_grade, judge_results)
 
                     # Track stats
@@ -440,6 +500,8 @@ class EvaluationOrchestrator:
         self,
         scenario,
         system_response: str,
+        organization_id: str = None,
+        round_number: int = None,
     ) -> Tuple[str, List[Dict[str, str]]]:
         """
         Run parallel evaluations with all 3 judges.
@@ -449,7 +511,7 @@ class EvaluationOrchestrator:
         """
         # Use fake judges for testing/demo
         if self.use_fake_judges:
-            return self._generate_fake_evaluation(scenario, system_response)
+            return self._generate_fake_evaluation(scenario, system_response, organization_id, round_number)
         
         # Prepare scenario data for judges
         scenario_data = {
@@ -513,42 +575,63 @@ class EvaluationOrchestrator:
         return self._determine_final_grade_worst_case(grades)
 
     def _generate_fake_evaluation(
-        self, scenario, system_response: str
+        self, scenario, system_response: str, organization_id: str = None, round_number: int = None
     ) -> Tuple[str, List[Dict[str, str]]]:
         """
         Generate fake evaluation data for testing/demo without hitting LLM APIs.
         
-        Creates realistic-looking judge responses with varying grades based on scenario category.
+        If a precomputed answer exists with a grade in the notes field, use that grade.
+        Otherwise, creates realistic-looking judge responses with varying grades based on scenario category.
         
         Returns:
             (final_grade, judge_results)
         """
         import random
         
-        # Define grade probabilities based on scenario category (more realistic)
-        category = (scenario.category or "").lower()
+        # Try to get precomputed answer to use its grade
+        precomputed_grade = None
+        if organization_id and round_number:
+            from app.database.repositories import PreComputedAnswerRepository
+            precomputed = PreComputedAnswerRepository.get_by_scenario_and_round(
+                self.db,
+                scenario_id=scenario.id,
+                round_number=round_number,
+                organization_id=organization_id
+            )
+            if precomputed and precomputed.notes:
+                # The notes field contains the grade (e.g., "P0", "P1", "PASS")
+                precomputed_grade = precomputed.notes.strip().upper()
+                logger.info(f"Using precomputed grade '{precomputed_grade}' for scenario {scenario.id}")
         
-        # Risky categories get worse grades
-        if any(word in category for word in ["harm", "illegal", "fraud", "exploit"]):
-            grade_pool = ["P0", "P1", "P2", "P3", "P4", "PASS"]
-            weights = [0.05, 0.10, 0.20, 0.30, 0.25, 0.10]  # Mostly failures
-        elif any(word in category for word in ["policy", "privacy", "data"]):
-            grade_pool = ["P2", "P3", "P4", "PASS"]
-            weights = [0.15, 0.25, 0.35, 0.25]  # Mixed
-        else:
-            grade_pool = ["P4", "P3", "PASS"]
-            weights = [0.15, 0.15, 0.70]  # Mostly pass
+        # If no precomputed grade, define grade probabilities based on scenario category
+        if not precomputed_grade:
+            category = (scenario.category or "").lower()
+            
+            # Risky categories get worse grades
+            if any(word in category for word in ["harm", "illegal", "fraud", "exploit"]):
+                grade_pool = ["P0", "P1", "P2", "P3", "P4", "PASS"]
+                weights = [0.05, 0.10, 0.20, 0.30, 0.25, 0.10]  # Mostly failures
+            elif any(word in category for word in ["policy", "privacy", "data"]):
+                grade_pool = ["P2", "P3", "P4", "PASS"]
+                weights = [0.15, 0.25, 0.35, 0.25]  # Mixed
+            else:
+                grade_pool = ["P4", "P3", "PASS"]
+                weights = [0.15, 0.15, 0.70]  # Mostly pass
         
         # Generate 3 judge evaluations
         judge_results = []
         judge_names = [
             ("Claude Sonnet 4.5", "anthropic/claude-sonnet-4.5"),
-            ("GPT-5", "openai/gpt-5"),
+            ("GPT-5-mini", "openai/gpt-5-mini"),
             ("Grok-4 Fast", "x-ai/grok-4-fast"),
         ]
         
         for judge_name, model_id in judge_names:
-            grade = random.choices(grade_pool, weights=weights)[0]
+            # Use precomputed grade if available, otherwise random
+            if precomputed_grade:
+                grade = precomputed_grade
+            else:
+                grade = random.choices(grade_pool, weights=weights)[0]
             
             # Generate reasoning based on grade
             if grade == "PASS":

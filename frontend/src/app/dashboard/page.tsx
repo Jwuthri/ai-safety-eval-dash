@@ -56,6 +56,9 @@ export default function DashboardPage() {
   const [groupBy, setGroupBy] = useState<'category' | 'subcategory'>('category');
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [checkingEligibility, setCheckingEligibility] = useState(false);
+  const [eligibilityResult, setEligibilityResult] = useState<any>(null);
+  const [showEligibilityModal, setShowEligibilityModal] = useState(false);
 
   useEffect(() => {
     loadRounds();
@@ -115,6 +118,37 @@ export default function DashboardPage() {
       setStats(data);
     } catch (error) {
       console.error('Failed to load stats:', error);
+    }
+  }
+
+  async function checkEligibility() {
+    if (!selectedRound) return;
+    
+    setCheckingEligibility(true);
+    
+    try {
+      // Check eligibility for the selected round
+      const eligibilityUrl = `http://localhost:8000/api/v1/certifications/organizations/${MOCK_ORG_ID}/eligibility?evaluation_round_id=${selectedRound}`;
+      console.log('Checking eligibility at:', eligibilityUrl);
+      
+      const eligibilityResponse = await fetch(eligibilityUrl);
+      
+      if (!eligibilityResponse.ok) {
+        const errorText = await eligibilityResponse.text();
+        console.error('Eligibility check failed:', errorText);
+        throw new Error(`Failed to check eligibility: ${eligibilityResponse.status}`);
+      }
+      
+      const eligibility = await eligibilityResponse.json();
+      console.log('Eligibility result:', eligibility);
+      
+      setEligibilityResult(eligibility);
+      setShowEligibilityModal(true);
+    } catch (error: any) {
+      console.error('Failed to check eligibility:', error);
+      alert(error.message || 'Failed to check AIUC-1 eligibility');
+    } finally {
+      setCheckingEligibility(false);
     }
   }
 
@@ -332,15 +366,25 @@ export default function DashboardPage() {
                     </svg>
                     Run New Round
                   </Link>
-                  <Link
-                    href={`/certification?round_id=${selectedRound}`}
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-card/50 border border-purple-500/20 text-white rounded-xl hover:border-purple-500/40 transition-all"
+                  <button
+                    onClick={checkEligibility}
+                    disabled={checkingEligibility || !selectedRound}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    Check AIUC-1 Eligibility
-                  </Link>
+                    {checkingEligibility ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Checking...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        Check AIUC-1 Eligibility
+                      </>
+                    )}
+                  </button>
                 </div>
               </>
             )}
@@ -450,7 +494,7 @@ export default function DashboardPage() {
                   }}
                   className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                   style={{
-                    background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${(currentRoundIndex / (comparisonData.rounds.length - 1)) * 100}%, #374151 ${(currentRoundIndex / (comparisonData.rounds.length - 1)) * 100}%, #374151 100%)`
+                    background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${(currentRoundIndex / (comparisonData.rounds.length - 1)) * 100}%, #334155 ${(currentRoundIndex / (comparisonData.rounds.length - 1)) * 100}%, #334155 100%)`
                   }}
                 />
                 <div className="flex justify-between mt-2">
@@ -661,7 +705,7 @@ export default function DashboardPage() {
                             y: yLabels,
                             type: 'heatmap',
                             colorscale: [
-                              [0, '#1a1f35'],
+                              [0, '#0f172a'],
                               [0.2, '#3730a3'],
                               [0.4, '#7c3aed'],
                               [0.6, '#a78bfa'],
@@ -705,6 +749,154 @@ export default function DashboardPage() {
               </div>
             </div>
           </>
+        )}
+
+        {/* Eligibility Modal */}
+        {showEligibilityModal && eligibilityResult && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="max-w-2xl w-full bg-card rounded-2xl border border-purple-500/30 shadow-2xl overflow-hidden"
+            >
+              {/* Header */}
+              <div className={`p-6 ${eligibilityResult.is_eligible ? 'bg-gradient-to-r from-green-600/20 to-emerald-600/20 border-b border-green-500/30' : 'bg-gradient-to-r from-orange-600/20 to-red-600/20 border-b border-orange-500/30'}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="text-5xl">
+                      {eligibilityResult.is_eligible ? '✅' : '⚠️'}
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">
+                        AIUC-1 Certification Status
+                      </h2>
+                      <p className="text-sm text-gray-300 mt-1">
+                        Round {currentRound?.round_number}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowEligibilityModal(false)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 space-y-6">
+                {/* Eligibility Status */}
+                <div className="text-center">
+                  {eligibilityResult.is_eligible ? (
+                    <div>
+                      <h3 className="text-3xl font-bold text-green-400 mb-2">
+                        🎉 Certified Eligible!
+                      </h3>
+                      <p className="text-gray-300">
+                        Your organization meets all AIUC-1 certification requirements.
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <h3 className="text-3xl font-bold text-orange-400 mb-2">
+                        Not Yet Eligible
+                      </h3>
+                      <p className="text-gray-300">
+                        Additional improvements needed to meet certification standards.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Pass Rate */}
+                <div className="p-4 rounded-xl bg-background/50 border border-purple-500/20">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-gray-300 font-medium">Overall Pass Rate</span>
+                    <span className="text-2xl font-bold text-purple-400">
+                      {eligibilityResult.pass_rate}%
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-background/80 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full ${eligibilityResult.pass_rate === 100 ? 'bg-green-500' : 'bg-purple-500'}`}
+                      style={{ width: `${eligibilityResult.pass_rate}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    {eligibilityResult.total_tests} total tests
+                  </p>
+                </div>
+
+                {/* Requirements Checklist */}
+                <div className="space-y-3">
+                  <h4 className="text-lg font-semibold text-white mb-3">Certification Requirements</h4>
+                  
+                  {Object.entries(eligibilityResult.requirements).map(([key, passed]: [string, any]) => (
+                    <div key={key} className="flex items-center gap-3 p-3 rounded-lg bg-background/30">
+                      {passed ? (
+                        <div className="text-green-400">
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                      ) : (
+                        <div className="text-red-400">
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                      )}
+                      <span className={`flex-1 ${passed ? 'text-gray-300' : 'text-red-300 font-medium'}`}>
+                        {key.replace(/_/g, ' ').replace(/zero/g, 'Zero').replace(/errors/g, 'Errors')}
+                      </span>
+                      {!passed && (
+                        <span className="text-sm text-red-400 font-bold">
+                          {eligibilityResult.severity_breakdown[key.replace('zero_', '').replace('_errors', '').toUpperCase()]} found
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Severity Breakdown */}
+                <div className="p-4 rounded-xl bg-background/30 border border-purple-500/10">
+                  <h4 className="text-sm font-medium text-gray-300 mb-3">Severity Breakdown</h4>
+                  <div className="grid grid-cols-6 gap-2">
+                    {Object.entries(eligibilityResult.severity_breakdown).reverse().map(([severity, count]: [string, any]) => (
+                      <div key={severity} className="text-center">
+                        <div className={`text-2xl font-bold ${getSeverityColor(severity as SeverityGrade)}`}>
+                          {count}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">{severity}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                <div className="pt-4">
+                  {eligibilityResult.is_eligible ? (
+                    <button
+                      onClick={() => setShowEligibilityModal(false)}
+                      className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all font-semibold"
+                    >
+                      🎊 Ready for Certification!
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setShowEligibilityModal(false)}
+                      className="w-full py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all font-semibold"
+                    >
+                      Close
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
         )}
       </main>
     </div>
