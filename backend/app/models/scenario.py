@@ -5,7 +5,7 @@ Scenario models.
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ScenarioBase(BaseModel):
@@ -32,5 +32,7 @@ class ScenarioResponse(ScenarioBase):
     business_type_id: str = Field(..., description="Business type ID")
     created_at: datetime = Field(..., description="Creation timestamp")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )

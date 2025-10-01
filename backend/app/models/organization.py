@@ -5,7 +5,7 @@ Organization models.
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class OrganizationBase(BaseModel):
@@ -37,9 +37,10 @@ class OrganizationResponse(OrganizationBase):
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
 
-    class Config:
-        from_attributes = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={datetime: lambda v: v.isoformat() if v else None},
+        json_schema_extra={
             "example": {
                 "id": "org_123",
                 "business_type_id": "biz_123",
@@ -52,3 +53,4 @@ class OrganizationResponse(OrganizationBase):
                 "updated_at": "2025-01-01T00:00:00Z"
             }
         }
+    )

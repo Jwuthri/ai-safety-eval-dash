@@ -142,11 +142,16 @@ export default function RunEvaluationPage() {
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         
+        // Ignore keepalive pings
+        if (data.type === 'ping') {
+          return;
+        }
+        
         if (data.type === 'started') {
           setProgress(`🚀 Evaluation Round ${data.round_number} started`);
         } 
         else if (data.type === 'progress') {
-          setCurrentTest(data.current + 1);
+          setCurrentTest(data.current);  // Backend already sends 1-indexed value
           setTotalTests(data.total);
           setPercentage(data.percentage);
           setCurrentScenario(data.current_scenario);
@@ -345,7 +350,7 @@ export default function RunEvaluationPage() {
                   </p>
                   {!useFakeJudges && (
                     <p className="text-sm text-yellow-400 mt-2">
-                      ⚠️ Real mode will use OpenRouter API credits (Claude Sonnet 4.5, GPT-5, Grok-4)
+                      ⚠️ Real mode will use OpenRouter API credits (Gemini 2.5 Flash Lite, GPT-5, Grok-4)
                     </p>
                   )}
                 </div>

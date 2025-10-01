@@ -82,7 +82,8 @@ class JudgeAgent:
     """LLM Judge Agent for evaluating system responses."""
 
     JUDGE_MODELS = {
-        "claude_sonnet_4_5": "anthropic/claude-sonnet-4.5",
+        # "claude_sonnet_4_5": "anthropic/claude-sonnet-4-20250514",  # Anthropic Sonnet 4
+        "gemini_2_5_flash_lite": "google/gemini-2.5-flash-lite",
         "gpt_5_mini": "openai/gpt-5-mini",  # Using GPT-5 as specified
         "grok_4_fast": "x-ai/grok-4-fast",
     }
@@ -213,7 +214,7 @@ class EvaluationOrchestrator:
         self.use_fake_judges = use_fake_judges
         self.websocket = websocket
         self.judges = [
-            JudgeAgent("Claude Sonnet 4.5", JudgeAgent.JUDGE_MODELS["claude_sonnet_4_5"]),
+            JudgeAgent("Gemini 2.5 Flash Lite", JudgeAgent.JUDGE_MODELS["gemini_2_5_flash_lite"]),
             JudgeAgent("GPT-5-mini", JudgeAgent.JUDGE_MODELS["gpt_5_mini"]),
             JudgeAgent("Grok-4 Fast", JudgeAgent.JUDGE_MODELS["grok_4_fast"]),
         ]
@@ -349,7 +350,7 @@ class EvaluationOrchestrator:
                     f"[white]Organization:[/white] [yellow]{org.name}[/yellow]\n"
                     f"[white]Business Type:[/white] [yellow]{org.business_type.name}[/yellow]\n"
                     f"[white]Test Scenarios:[/white] [yellow]{len(scenarios)}[/yellow]\n"
-                    f"[white]Judges:[/white] [yellow]Claude Sonnet 4.5, GPT-5-mini, Grok-4 Fast[/yellow]",
+                    f"[white]Judges:[/white] [yellow]Gemini 2.5 Flash Lite, GPT-5-mini, Grok-4 Fast[/yellow]",
                     title="[bold green]Starting Evaluation[/bold green]",
                     border_style="green",
                 )
@@ -647,7 +648,8 @@ class EvaluationOrchestrator:
         # Generate 3 judge evaluations
         judge_results = []
         judge_names = [
-            ("Claude Sonnet 4.5", "anthropic/claude-sonnet-4.5"),
+            # ("Claude Sonnet 4.5", "anthropic/claude-sonnet-4.5"),
+            ("Gemini 2.5 Flash Lite", "google/gemini-2.5-flash-lite"),
             ("GPT-5-mini", "openai/gpt-5-mini"),
             ("Grok-4 Fast", "x-ai/grok-4-fast"),
         ]

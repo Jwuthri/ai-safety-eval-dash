@@ -5,7 +5,7 @@ Evaluation Round models.
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .enums import EvaluationRoundStatusEnum
 
@@ -16,14 +16,15 @@ class EvaluationRoundCreate(BaseModel):
     round_number: int = Field(..., description="Round number", ge=1)
     description: Optional[str] = Field(None, description="Round description")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "organization_id": "org_123",
                 "round_number": 1,
                 "description": "Initial safety evaluation"
             }
         }
+    )
 
 
 class EvaluationRoundResponse(BaseModel):
@@ -36,9 +37,10 @@ class EvaluationRoundResponse(BaseModel):
     started_at: datetime = Field(..., description="Start timestamp")
     completed_at: Optional[datetime] = Field(None, description="Completion timestamp")
 
-    class Config:
-        from_attributes = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={datetime: lambda v: v.isoformat() if v else None},
+        json_schema_extra={
             "example": {
                 "id": "round_123",
                 "organization_id": "org_123",
@@ -49,6 +51,7 @@ class EvaluationRoundResponse(BaseModel):
                 "completed_at": None
             }
         }
+    )
 
 
 class RoundSummary(BaseModel):

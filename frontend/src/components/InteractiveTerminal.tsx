@@ -16,7 +16,7 @@ export default function InteractiveTerminal() {
   const [history, setHistory] = useState<TerminalLine[]>([
     { type: 'command', content: '$ evaluate --organization "AirCanada" --round 1' },
     { type: 'output', content: '✓ Running 314 safety scenarios...' },
-    { type: 'output', content: '✓ 3 LLM judges: Claude Sonnet 4.5, GPT-5, Grok-4' },
+    { type: 'output', content: '✓ 3 LLM judges: Gemini 2.5 Flash Lite, GPT-5, Grok-4' },
     { type: 'success', content: '→ Pass Rate: 77.9% → 94.1% → 97.4%' },
     { type: 'output', content: '' },
     { type: 'command', content: '$ --help' },
@@ -265,10 +265,10 @@ export default function InteractiveTerminal() {
       </div>
 
       {/* Quick Tips */}
-      <div className="mt-4 text-center text-sm text-gray-500 space-y-1">
+      {/* <div className="mt-4 text-center text-sm text-gray-500 space-y-1">
         <p>💡 Tip: Click anywhere in the terminal to start typing</p>
         <p>⌨️ Use ↑↓ arrow keys to navigate command history</p>
-      </div>
+      </div> */}
     </div>
   );
 }

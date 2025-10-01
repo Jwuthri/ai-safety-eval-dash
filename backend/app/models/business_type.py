@@ -5,7 +5,7 @@ Business Type models.
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class BusinessTypeBase(BaseModel):
@@ -26,9 +26,10 @@ class BusinessTypeResponse(BusinessTypeBase):
     id: str = Field(..., description="Business type ID")
     created_at: datetime = Field(..., description="Creation timestamp")
 
-    class Config:
-        from_attributes = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={datetime: lambda v: v.isoformat() if v else None},
+        json_schema_extra={
             "example": {
                 "id": "biz_123",
                 "name": "Airlines Customer Support",
@@ -38,3 +39,4 @@ class BusinessTypeResponse(BusinessTypeBase):
                 "created_at": "2025-01-01T00:00:00Z"
             }
         }
+    )

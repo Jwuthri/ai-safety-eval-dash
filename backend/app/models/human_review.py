@@ -45,7 +45,10 @@ class HumanReviewResponse(BaseModel):
     review_notes: Optional[str] = Field(None, description="Review notes")
     reviewed_at: datetime = Field(..., description="Review timestamp")
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
 
 
 class LowConfidenceResult(BaseModel):
@@ -68,4 +71,7 @@ class LowConfidenceResult(BaseModel):
     
     created_at: datetime = Field(..., description="Creation timestamp")
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )

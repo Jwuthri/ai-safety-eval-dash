@@ -7,8 +7,11 @@ Handles:
 - Getting round statistics
 """
 
+import asyncio
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from ...database import get_db
@@ -64,7 +67,7 @@ async def start_evaluation_round(
     return evaluation_round
 
 
-@router.get("/rounds/{round_id}", response_model=EvaluationRoundResponse)
+@router.get("/rounds/{round_id}")
 def get_evaluation_round(
     round_id: str,
     db: Session = Depends(get_db),
@@ -74,10 +77,11 @@ def get_evaluation_round(
     if not evaluation_round:
         raise HTTPException(status_code=404, detail=f"Evaluation round {round_id} not found")
     
-    return evaluation_round
+    # Use jsonable_encoder to properly serialize datetime fields
+    return JSONResponse(content=jsonable_encoder(evaluation_round))
 
 
-@router.get("/rounds/{round_id}/results", response_model=List[EvaluationResultResponse])
+@router.get("/rounds/{round_id}/results")
 def get_round_results(
     round_id: str,
     db: Session = Depends(get_db),
@@ -99,10 +103,11 @@ def get_round_results(
         evaluation_round_id=round_id
     ).offset(offset).limit(limit).all()
     
-    return results
+    # Use jsonable_encoder to properly serialize datetime fields
+    return JSONResponse(content=jsonable_encoder(results))
 
 
-@router.get("/rounds/{round_id}/stats", response_model=RoundSummary)
+@router.get("/rounds/{round_id}/stats")
 def get_round_statistics(
     round_id: str,
     db: Session = Depends(get_db),
@@ -120,14 +125,15 @@ def get_round_statistics(
     if not evaluation_round:
         raise HTTPException(status_code=404, detail=f"Evaluation round {round_id} not found")
     
-    # Get stats
+    # Get stats - returns a plain dict with no datetime objects
     orchestrator = EvaluationOrchestrator(db)
     stats = orchestrator.get_round_statistics(round_id)
-    
-    return stats
+
+    # Return plain dict directly (no datetime fields in this response)
+    return JSONResponse(content=stats)
 
 
-@router.get("/organizations/{organization_id}/rounds", response_model=List[EvaluationRoundResponse])
+@router.get("/organizations/{organization_id}/rounds")
 def list_organization_rounds(
     organization_id: str,
     db: Session = Depends(get_db),
@@ -144,10 +150,10 @@ def list_organization_rounds(
         organization_id=organization_id
     ).order_by(EvaluationRound.started_at.desc()).limit(limit).all()
     
-    return rounds
+    return JSONResponse(content=jsonable_encoder(rounds))
 
 
-@router.get("/organizations/{organization_id}/latest-round", response_model=Optional[EvaluationRoundResponse])
+@router.get("/organizations/{organization_id}/latest-round")
 def get_latest_round(
     organization_id: str,
     db: Session = Depends(get_db),
@@ -155,8 +161,8 @@ def get_latest_round(
     """Get the latest evaluation round for an organization."""
     round = EvaluationRoundRepository.get_latest_by_organization(db, organization_id)
     if not round:
-        return None
-    return round
+        return JSONResponse(content=None)
+    return JSONResponse(content=jsonable_encoder(round))
 
 
 @router.post("/run")
@@ -248,6 +254,23 @@ async def run_evaluation_websocket(websocket: WebSocket):
     await websocket.accept()
     logger.info("WebSocket connection established for evaluation")
     
+    # Start keepalive ping task to prevent timeout
+    keepalive_task = None
+    
+    async def send_ping():
+        """Send periodic ping to keep connection alive."""
+        try:
+            while True:
+                await asyncio.sleep(5)  # Ping every 5 seconds
+                try:
+                    await websocket.send_json({"type": "ping"})
+                except:
+                    break
+        except asyncio.CancelledError:
+            pass
+    
+    keepalive_task = asyncio.create_task(send_ping())
+    
     try:
         # Receive evaluation request from client
         data = await websocket.receive_json()
@@ -318,4 +341,16 @@ async def run_evaluation_websocket(websocket: WebSocket):
             })
         except:
             pass
-        await websocket.close()
+    finally:
+        # Cancel keepalive task
+        if keepalive_task:
+            keepalive_task.cancel()
+            try:
+                await keepalive_task
+            except asyncio.CancelledError:
+                pass
+        
+        try:
+            await websocket.close()
+        except:
+            pass

@@ -164,7 +164,7 @@ Format: JSON
 # Using asyncio + agno framework
 async def evaluate_response(test_scenario, system_response):
     judges = [
-        JudgeAgent(model="anthropic/claude-sonnet-4.5"),
+        # JudgeAgent(model="anthropic/claude-sonnet-4.5"),
         JudgeAgent(model="openai/gpt-5"),
         JudgeAgent(model="x-ai/grok-4-fast")
     ]

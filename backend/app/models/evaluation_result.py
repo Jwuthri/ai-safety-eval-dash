@@ -5,7 +5,7 @@ Evaluation Result models.
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .enums import SeverityGrade
 from .scenario import ScenarioResponse
@@ -60,5 +60,7 @@ class EvaluationResultResponse(BaseModel):
     
     created_at: datetime = Field(..., description="Creation timestamp")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )

@@ -15,6 +15,7 @@ from ...models.organization import (
     OrganizationCreate,
     OrganizationUpdate,
 )
+from ...services import OrganizationService
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 
@@ -24,7 +25,12 @@ def create_organization(
     request: OrganizationCreate,
     db: Session = Depends(get_db),
 ):
-    """Create a new organization."""
+    """
+    Create a new organization.
+    
+    Automatically copies precomputed answers from an existing organization 
+    with the same business type.
+    """
     # Verify business type exists
     business_type = BusinessTypeRepository.get_by_id(db, request.business_type_id)
     if not business_type:
@@ -41,14 +47,15 @@ def create_organization(
             detail=f"Organization with slug '{request.slug}' already exists"
         )
     
-    # Create organization
-    org = OrganizationRepository.create(
-        db,
+    # Create organization with auto-copied precomputed answers
+    org = OrganizationService.create_organization_with_precomputed_answers(
+        db=db,
         business_type_id=request.business_type_id,
         name=request.name,
         slug=request.slug,
         contact_email=request.contact_email,
         contact_name=request.contact_name,
+        copy_answers=True,  # Auto-copy precomputed answers from existing org
     )
     
     return org
